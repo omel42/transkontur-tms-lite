@@ -90,20 +90,30 @@ function showDrawer(content) {
   document.body.classList.add("modal-open");
 }
 
+function resetPageScroll() {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+}
+
 function route() {
   closeOverlays();
   const raw = location.hash.replace(/^#/, "");
   const [root, id] = raw.split("/");
   if (root === "office") {
     ui.view = APP_VIEWS.has(id) ? id : "dashboard";
-    showSurface("workspace"); renderApp(); window.scrollTo(0, 0); return;
+    showSurface("workspace"); renderApp(); resetPageScroll(); return;
   }
   if (["track", "driver", "carrier"].includes(root)) {
-    showSurface("role"); renderRole(root, id); window.scrollTo(0, 0); return;
+    showSurface("role"); renderRole(root, id); resetPageScroll(); return;
   }
   showSurface("marketing");
-  if (!PUBLIC_SECTIONS.has(root)) location.hash = "#top";
-  requestAnimationFrame(initReveal);
+  if (!PUBLIC_SECTIONS.has(root)) { location.hash = "#top"; return; }
+  requestAnimationFrame(() => {
+    initReveal();
+    const alignSection = () => document.getElementById(root || "top")?.scrollIntoView({ block: "start", behavior: "auto" });
+    requestAnimationFrame(alignSection);
+    document.fonts?.ready.then(alignSection);
+  });
 }
 
 function showSurface(surface) {
@@ -166,7 +176,7 @@ function renderLeads() {
 
 function leadCard(lead) {
   const margin = Number(lead.clientRate || 0) - Number(lead.carrierRate || 0);
-  return `<article class="lead-card" data-open-lead="${lead.id}"><div class="lead-card-top"><span>${esc(lead.number)}</span><b class="tag tone-${lead.source === "Сайт" ? "acid" : "gray"}">${esc(lead.source)}</b></div><div><h3>${esc(lead.company)}</h3><p>${esc(lead.contact)} · ${esc(lead.phone)}</p></div><div class="lead-card-meta"><span>${esc(lead.from)} → ${esc(lead.to)}</span><b>${lead.weight || "—"} т</b></div><div class="lead-card-foot"><div><small>Ставка клиенту</small><strong>${money(lead.clientRate)}</strong></div><div><small>Маржа</small><strong class="money-positive">${money(margin)}</strong></div></div></article>`;
+  return `<article class="lead-card" data-open-lead="${lead.id}"><div class="lead-card-top"><span>${esc(lead.number)}</span><b class="tag tone-${lead.source === "Сайт" ? "acid" : "gray"}">${esc(lead.source)}</b></div><div><h3>${esc(lead.company)}</h3><p><span>${esc(lead.contact || "Контакт не указан")}</span><span>${esc(lead.phone || "Телефон не указан")}</span></p></div><div class="lead-card-meta"><span>${esc(lead.from)} → ${esc(lead.to)}</span><b>${lead.weight || "—"} т</b></div><div class="lead-card-foot"><div><small>Ставка клиенту</small><strong>${money(lead.clientRate)}</strong></div><div><small>Маржа</small><strong class="money-positive">${money(margin)}</strong></div></div></article>`;
 }
 
 function renderTrips() {

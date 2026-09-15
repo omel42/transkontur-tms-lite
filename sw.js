@@ -1,12 +1,12 @@
-const CACHE = "transkontur-v5";
+const CACHE = "transkontur-v11";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=5",
-  "./app.css?v=5",
-  "./responsive.css?v=5",
-  "./fix.css?v=5",
-  "./src/app.js?v=5",
+  "./styles.css?v=11",
+  "./app.css?v=11",
+  "./responsive.css?v=11",
+  "./fix.css?v=11",
+  "./src/app.js?v=11",
   "./src/domain.js?v=5",
   "./src/seed.js?v=5",
   "./assets/logo-mark.svg",
