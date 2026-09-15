@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111d" />
+    <meta name="description" content="ТрансКонтур ЭПД — рабочий центр перевозки: заявка, ЭТрН, подписи, QR-код, закрывающие документы и оплата в одной карточке." />
+    <meta property="og:title" content="ТрансКонтур ЭПД — перевозка без документального хаоса" />
+    <meta property="og:description" content="Интерактивная концепция системы, которая связывает звонок клиента, рейс, ЭПД, подписи и оплату." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="../assets/hero-logistics.jpg" />
+    <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
+    <title>ТрансКонтур ЭПД — документы движутся вместе с грузом</title>
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="ТрансКонтур ЭПД — на главную">
+        <img src="../assets/logo-mark.svg" alt="" width="46" height="46" />
+        <span><strong>ТрансКонтур</strong><small>ЦЕНТР УПРАВЛЕНИЯ ЭПД</small></span>
+      </a>
+      <nav class="site-nav" aria-label="Основная навигация">
+        <a href="#problem">Как сейчас</a>
+        <a href="#system">Как работает</a>
+        <a href="#documents">Документы</a>
+        <a href="#pilot">Внедрение</a>
+      </nav>
+      <div class="header-actions">
+        <a class="version-link" href="../">Версия 1</a>
+        <a class="button button--acid button--small" href="#demo">Рабочее демо <span>↗</span></a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section-dark" aria-labelledby="hero-title">
+        <div class="hero-noise" aria-hidden="true"></div>
+        <div class="hero-route" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow"><span></span> ОПЕРАЦИОННЫЙ СЛОЙ НАД ЭПД</div>
+            <h1 id="hero-title">Груз едет.<br /><em>Документы не тормозят.</em></h1>
+            <p>Один раз фиксируем договорённости из звонка — и превращаем их в рейс, комплект ЭПД, задачи участникам, QR-код водителю и основание для оплаты.</p>
+            <div class="hero-actions">
+              <a class="button button--acid" href="#demo">Показать, как работает <span>↗</span></a>
+            </div>
+            <div class="law-strip" aria-label="Сроки перехода на ЭПД">
+              <div><small>ОБЯЗАТЕЛЬНО</small><strong>с 01.09.2026</strong></div>
+              <span></span>
+              <div><small>ПЕРЕХОДНЫЙ ПЕРИОД</small><strong>до 01.03.2027</strong></div>
+              <span></span>
+              <div><small>ПОДКЛЮЧЕНИЕ</small><strong>через оператора ИС ЭПД</strong></div>
+            </div>
+          </div>
+
+          <div class="hero-console" aria-label="Предпросмотр центра управления ЭПД">
+            <div class="console-bar">
+              <div class="traffic"><i></i><i></i><i></i></div>
+              <span>Центр ЭПД · сегодня</span>
+              <b><i></i> СИНХРОНИЗИРОВАНО</b>
+            </div>
+            <div class="console-body">
+              <div class="console-heading">
+                <div><small>РЕЙС TK-24031</small><h2>Москва → Казань</h2></div>
+                <span class="pill pill--moving">На погрузке</span>
+              </div>
+              <div class="console-progress" aria-label="Прогресс документов: 4 из 6">
+                <div><span>Комплект готов</span><b>4 / 6</b></div>
+                <i><span></span></i>
+              </div>
+              <div class="console-alert">
+                <span class="alert-icon">!</span>
+                <div><small>БЛОКИРУЕТ QR-КОД</small><strong>Перевозчик ещё не подписал титул Т2</strong></div>
+                <button type="button" data-scroll-demo>Разобраться →</button>
+              </div>
+              <div class="document-mini-list">
+                <article><span class="doc-icon">З</span><div><strong>Заказ-заявка</strong><small>Подписали 2 из 2</small></div><b class="state state--done">Готово</b></article>
+                <article><span class="doc-icon">Т1</span><div><strong>ЭТрН · грузоотправитель</strong><small>XML прошёл проверку</small></div><b class="state state--done">Подписан</b></article>
+                <article><span class="doc-icon doc-icon--alert">Т2</span><div><strong>ЭТрН · перевозчик</strong><small>Ждём подпись ООО «Вектор»</small></div><b class="state state--wait">Ждём</b></article>
+              </div>
+              <div class="console-bottom">
+                <div class="participant-stack"><span>ГО</span><span>П</span><span>В</span><span>ГП</span></div>
+                <small>Каждый видит только свой следующий шаг</small>
+                <button type="button" class="button button--dark button--compact" data-scroll-demo>Открыть рейс</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="problem section" id="problem" aria-labelledby="problem-title">
+        <div class="container">
+          <div class="section-head section-head--split">
+            <div><div class="kicker">НЕ ЕЩЁ ОДНА TMS</div><h2 id="problem-title">Документы уже есть.<br /><em>Ручная работа — между ними.</em></h2></div>
+            <p>Оператор ЭПД передаёт юридически значимые файлы. Но логисту всё равно приходится держать в голове звонки, реквизиты, подписи, замены машины, возврат документов и оплату.</p>
+          </div>
+
+          <div class="pain-map">
+            <div class="pain-side pain-side--before">
+              <div class="pain-label">КАК СЕЙЧАС</div>
+              <div class="chaos-board" aria-label="Разрозненный процесс">
+                <span class="chaos-node node-phone">☎ Звонок</span>
+                <span class="chaos-node node-sheet">▦ Таблица</span>
+                <span class="chaos-node node-chat">● Чат водителя</span>
+                <span class="chaos-node node-edo">К Контур</span>
+                <span class="chaos-node node-paper">▤ Бумага</span>
+                <svg viewBox="0 0 500 270" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M80 52 C220 30, 280 220, 420 210" />
+                  <path d="M82 52 C170 180, 320 30, 417 75" />
+                  <path d="M115 210 C190 80, 335 230, 417 75" />
+                  <path d="M250 130 C300 95, 350 105, 420 210" />
+                </svg>
+              </div>
+              <ul class="pain-list">
+                <li><span>01</span>Одни реквизиты вводятся несколько раз</li>
+                <li><span>02</span>Неясно, кто задержал документ</li>
+                <li><span>03</span>Ошибка находится уже на погрузке</li>
+              </ul>
+            </div>
+
+            <div class="pain-transform" aria-hidden="true"><span>→</span><small>ОДНА<br />КАРТОЧКА</small></div>
+
+            <div class="pain-side pain-side--after">
+              <div class="pain-label">КАК ДОЛЖНО БЫТЬ</div>
+              <div class="clean-flow">
+                <div class="flow-source"><span>☎</span><small>ЗАЯВКА</small><strong>Москва → Казань</strong></div>
+                <i>→</i>
+                <div class="flow-core"><img src="../assets/logo-mark.svg" alt="" /><small>ТРАНСКОНТУР</small><strong>Единая карточка</strong></div>
+                <i>→</i>
+                <div class="flow-result"><span>✓</span><small>РЕЗУЛЬТАТ</small><strong>Подписано · QR готов</strong></div>
+              </div>
+              <ul class="pain-list pain-list--good">
+                <li><span>01</span>Автозаполнение из карточек контрагентов</li>
+                <li><span>02</span>Следующий шаг и ответственный видны сразу</li>
+                <li><span>03</span>XML проверяется до отправки оператору</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="system section section-soft" id="system" aria-labelledby="system-title">
+        <div class="container">
+          <div class="section-head">
+            <div class="kicker">НЕ КОНКУРИРУЕМ С ГИС ЭПД</div>
+            <h2 id="system-title">У каждого слоя —<br /><em>своя работа.</em></h2>
+            <p>ТрансКонтур становится удобным рабочим местом. Юридическая доставка и межоператорский обмен остаются у аккредитованного оператора.</p>
+          </div>
+
+          <div class="architecture" aria-label="Схема взаимодействия участников, ТрансКонтура, оператора и ГИС ЭПД">
+            <div class="arch-column arch-people">
+              <small>УЧАСТНИКИ</small>
+              <div><span>К</span><strong>Клиент</strong><em>создаёт заявку</em></div>
+              <div><span>Л</span><strong>Логист</strong><em>управляет рейсом</em></div>
+              <div><span>В</span><strong>Водитель</strong><em>подтверждает события</em></div>
+            </div>
+            <div class="arch-arrow"><i></i><span>одни данные</span><i></i></div>
+            <div class="arch-core">
+              <div class="arch-logo"><img src="../assets/logo-mark.svg" alt="" /><span><small>РАБОЧИЙ СЛОЙ</small><strong>ТрансКонтур</strong></span></div>
+              <ul>
+                <li><span>01</span>Карточка рейса</li>
+                <li><span>02</span>Черновики XML</li>
+                <li><span>03</span>Проверка реквизитов</li>
+                <li><span>04</span>Очередь подписей</li>
+                <li><span>05</span>События и аудит</li>
+              </ul>
+            </div>
+            <div class="arch-arrow"><i></i><span>API / роуминг</span><i></i></div>
+            <div class="arch-external">
+              <div class="operator-card"><small>АККРЕДИТОВАННЫЙ ОПЕРАТОР</small><strong>Контур · СБИС · Такском · другой</strong><span>Подпись, юридическая доставка, обмен</span></div>
+              <div class="external-arrow">↓</div>
+              <div class="gis-card"><small>ГОСУДАРСТВЕННЫЙ КОНТУР</small><strong>ГИС ЭПД</strong><span>Регистрация, хранение, контроль, QR</span></div>
+            </div>
+          </div>
+
+          <div class="system-notes">
+            <article><span>01</span><div><strong>Не привязываемся навсегда</strong><p>Интеграция строится через адаптер: сначала один оператор, затем подключаются остальные.</p></div></article>
+            <article><span>02</span><div><strong>Не ломаем перевозку без сети</strong><p>События сохраняются в очереди, водитель видит копию и QR, синхронизация продолжается после восстановления связи.</p></div></article>
+            <article><span>03</span><div><strong>Не подменяем юридическую подпись</strong><p>Система готовит, проверяет и маршрутизирует документ; подпись выполняется допустимым способом участника.</p></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="workflow section section-dark" id="workflow" aria-labelledby="workflow-title">
+        <div class="container">
+          <div class="section-head section-head--light">
+            <div class="kicker">СКВОЗНОЙ СЦЕНАРИЙ</div>
+            <h2 id="workflow-title">От «алло» до оплаты.<br /><em>Без второго ввода.</em></h2>
+          </div>
+          <ol class="workflow-track">
+            <li><span>01</span><div class="workflow-icon">☎</div><h3>Звонок</h3><p>Логист фиксирует маршрут, груз, ставку и контакты в короткой форме.</p><small>2–3 минуты</small></li>
+            <li><span>02</span><div class="workflow-icon">⌁</div><h3>Проверка</h3><p>ИНН, адреса, роли сторон и обязательные поля проверяются до погрузки.</p><small>без возврата XML</small></li>
+            <li><span>03</span><div class="workflow-icon">▤</div><h3>Комплект</h3><p>Из одной карточки формируются ЭЗЗ, ЭТрН и документы экспедитора.</p><small>по шаблону</small></li>
+            <li><span>04</span><div class="workflow-icon">✓</div><h3>Подписи</h3><p>Каждый участник получает только свой следующий шаг и понятный срок.</p><small>контроль титулов</small></li>
+            <li><span>05</span><div class="workflow-icon">▣</div><h3>Рейс и QR</h3><p>Водитель видит маршрут, контакты, статус документов и код проверки.</p><small>работает с телефона</small></li>
+            <li><span>06</span><div class="workflow-icon">₽</div><h3>Закрытие</h3><p>После выгрузки система собирает подтверждения и ставит задачу на оплату.</p><small>акт · УПД · счёт</small></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="documents section" id="documents" aria-labelledby="documents-title">
+        <div class="container">
+          <div class="section-head section-head--split">
+            <div><div class="kicker">КОМПЛЕКТ ЗАВИСИТ ОТ РОЛИ ООО</div><h2 id="documents-title">Не свалка файлов.<br /><em>Живой пакет рейса.</em></h2></div>
+            <div class="role-toggle" role="group" aria-label="Выбор роли компании">
+              <button class="active" type="button" data-doc-role="forwarder">ООО — экспедитор</button>
+              <button type="button" data-doc-role="carrier">ООО — перевозчик</button>
+            </div>
+          </div>
+
+          <div class="document-board" data-document-board>
+            <aside class="document-context">
+              <small>ВЫБРАННЫЙ СЦЕНАРИЙ</small>
+              <h3 data-role-title>ООО организует перевозку чужой машиной</h3>
+              <p data-role-copy>Компания принимает поручение клиента, привлекает перевозчика и отвечает за экспедиционную часть процесса.</p>
+              <div class="context-warning"><span>!</span><p data-role-warning>Нужно проверить включение ООО в реестр экспедиторов «ГосЛог».</p></div>
+            </aside>
+            <div class="document-stack" data-doc-stack>
+              <!-- Заполняется скриптом: так переключатель показывает реальный состав пакета. -->
+            </div>
+          </div>
+
+          <div class="legal-card">
+            <div><span class="legal-mark">§</span><div><small>ПРАВОВАЯ РЕАЛЬНОСТЬ · СЕНТЯБРЬ 2026</small><strong>Обязательный формат уже действует</strong></div></div>
+            <p>Основные перевозочные и экспедиторские документы формируются в электронном виде с 1 сентября 2026 года. До 1 марта 2027 года действует период без штрафов за бумажное оформление — это время для настройки, а не перенос запуска.</p>
+            <div class="source-links">
+              <a href="https://www.mintrans.gov.ru/eye/press-center/news/12933" target="_blank" rel="noreferrer">Разъяснение Минтранса ↗</a>
+              <a href="https://www.nalog.gov.ru/rn77/related_activities/el_doc/el_bus_entities/approved_formats/" target="_blank" rel="noreferrer">Форматы ФНС ↗</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo section section-soft" id="demo" aria-labelledby="demo-title">
+        <div class="container">
+          <div class="section-head section-head--split demo-intro">
+            <div><div class="kicker">ИНТЕРАКТИВНЫЙ ПРОТОТИП</div><h2 id="demo-title">Не презентация.<br /><em>Пощёлкайте сами.</em></h2></div>
+            <div><p>Это локальная симуляция рабочего дня без отправки реальных документов. Исправьте ошибку, отправьте титул на подпись и получите QR.</p><button class="text-button" type="button" data-reset-demo>Сбросить демо ↻</button></div>
+          </div>
+
+          <div class="workspace-demo">
+            <aside class="demo-sidebar">
+              <a class="demo-brand" href="#top"><img src="../assets/logo-mark.svg" alt="" /><span><strong>ТрансКонтур</strong><small>ЭПД ЦЕНТР</small></span></a>
+              <nav>
+                <button class="active" type="button" data-demo-screen="queue"><span>⌁</span>Очередь<b data-queue-count>3</b></button>
+                <button type="button" data-demo-screen="trip"><span>↗</span>Рейс TK-24031</button>
+                <button type="button" data-demo-screen="docs"><span>▤</span>Документы<b>6</b></button>
+              </nav>
+              <div class="demo-sync"><i></i><div><strong>Демо · локально</strong><small>Данные не отправляются</small></div></div>
+            </aside>
+
+            <div class="demo-main">
+              <header class="demo-topbar">
+                <button class="demo-menu" type="button" aria-label="Меню">☰</button>
+                <div class="demo-search">⌕ <span>Рейс, документ, контрагент…</span></div>
+                <div class="demo-date">15 сентября 2026</div>
+                <span class="demo-avatar">АК</span>
+              </header>
+              <div class="demo-screen" data-demo-content></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="roles section section-dark" id="roles" aria-labelledby="roles-title">
+        <div class="container role-grid">
+          <div class="role-copy">
+            <div class="kicker">ОДИН РЕЙС · РАЗНЫЕ РОЛИ</div>
+            <h2 id="roles-title">Каждому — только то,<br /><em>что нужно сейчас.</em></h2>
+            <div class="role-tabs" role="tablist">
+              <button class="active" type="button" data-role-preview="driver"><span>01</span><div><strong>Водитель</strong><small>Маршрут, следующий шаг, QR и связь</small></div></button>
+              <button type="button" data-role-preview="client"><span>02</span><div><strong>Клиент</strong><small>Статус груза и документов без звонков</small></div></button>
+              <button type="button" data-role-preview="logist"><span>03</span><div><strong>Логист</strong><small>Исключения и ответственные вместо рутины</small></div></button>
+            </div>
+          </div>
+          <div class="phone-stage">
+            <div class="phone-shell">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" data-phone-preview></div>
+            </div>
+            <div class="phone-callout phone-callout--top"><span>1</span><p><strong>Не ищет документ</strong>Всё привязано к рейсу</p></div>
+            <div class="phone-callout phone-callout--bottom"><span>2</span><p><strong>Не звонит логисту</strong>Следующий шаг уже на экране</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="pilot section" id="pilot" aria-labelledby="pilot-title">
+        <div class="container pilot-grid">
+          <div>
+            <div class="kicker">НЕ СТРОИМ ГОД ВСЛЕПУЮ</div>
+            <h2 id="pilot-title">Первый пилот —<br /><em>одна неделя.</em></h2>
+            <p>Берём один реальный рейс товарища и раскладываем его от входящего звонка до оплаты. Без персональных данных в демонстрации.</p>
+            <a class="button button--dark" href="#pilot-form">Подготовить сценарий пилота <span>→</span></a>
+          </div>
+          <ol class="pilot-steps">
+            <li><span>ДЕНЬ 1</span><div><strong>Снимаем процесс</strong><p>Экранная запись и обезличенный комплект одного закрытого рейса.</p></div></li>
+            <li><span>ДЕНЬ 2–3</span><div><strong>Собираем карту</strong><p>Кто создаёт, проверяет и подписывает каждый файл. Где зависает оператор.</p></div></li>
+            <li><span>ДЕНЬ 4–5</span><div><strong>Настраиваем прототип</strong><p>Поля, статусы, шаблоны и исключения именно под его ООО.</p></div></li>
+            <li><span>ДЕНЬ 6–7</span><div><strong>Проводим второй рейс</strong><p>Сравниваем время, ошибки и количество звонков с обычным процессом.</p></div></li>
+          </ol>
+        </div>
+
+        <div class="container pilot-form-wrap" id="pilot-form">
+          <form class="pilot-form" data-pilot-form>
+            <div><small>КАРТОЧКА ПИЛОТА</small><h3>С чего начинается ваш реальный рейс?</h3><p>Ответы сохранятся только в этом браузере и появятся в демо-очереди.</p></div>
+            <label><span>Роль ООО</span><select name="companyRole"><option value="Экспедитор">Экспедитор — нанимаем перевозчика</option><option value="Перевозчик">Перевозчик — везём своими машинами</option><option value="Агент">Агент — только сводим стороны</option></select></label>
+            <label><span>Оператор ЭПД</span><select name="operator"><option value="Контур">Контур</option><option value="СБИС">СБИС</option><option value="Такском">Такском</option><option value="Другой / пока нет">Другой / пока нет</option></select></label>
+            <label class="form-wide"><span>Что тормозит сильнее всего?</span><textarea name="pain" placeholder="Например: водитель не видит, что подписывать; реквизиты вводим три раза; неясно, у кого завис титул…"></textarea></label>
+            <button class="button button--acid form-wide" type="submit">Сохранить сценарий <span>→</span></button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="brand brand--footer"><img src="../assets/logo-mark.svg" alt="" /><span><strong>ТрансКонтур</strong><small>ДОКУМЕНТЫ ДВИЖУТСЯ ВМЕСТЕ С ГРУЗОМ</small></span></div>
+        <p>Концепт продукта. В демо нет реальной подписи, отправки в ГИС ЭПД и обработки персональных данных.</p>
+        <div><a href="../">Первая версия</a><a href="#demo">Интерактивное демо</a><a href="#documents">Документы</a></div>
+        <span>V2 · 2026</span>
+      </div>
+    </footer>
+
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+    <script type="module" src="./app.js?v=2"></script>
+  </body>
+</html>
