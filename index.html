@@ -3,124 +3,321 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#18221d" />
-    <meta name="description" content="TMS Lite для небольших автоперевозчиков: заявки, рейсы, экипажи и экономика." />
+    <meta name="theme-color" content="#07111b" />
+    <meta
+      name="description"
+      content="ТрансКонтур — организация автомобильных грузоперевозок с понятным контролем рейса, документов и расчётов."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="ТрансКонтур — грузоперевозки под контролем" />
+    <meta property="og:description" content="Заявка, рейс, документы и расчёты — в одном понятном логистическом контуре." />
+    <meta property="og:url" content="https://omel42.github.io/transkontur-tms-lite/" />
+    <meta property="og:image" content="https://omel42.github.io/transkontur-tms-lite/assets/hero-logistics.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://omel42.github.io/transkontur-tms-lite/" />
+    <link rel="preload" href="./assets/hero-logistics.jpg" as="image" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=3" />
-    <title>ТрансКонтур — TMS Lite</title>
+    <link rel="stylesheet" href="./styles.css?v=5" />
+    <link rel="stylesheet" href="./app.css?v=5" />
+    <link rel="stylesheet" href="./responsive.css?v=5" />
+    <link rel="stylesheet" href="./fix.css?v=5" />
+    <title>ТрансКонтур — грузоперевозки под контролем</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "ТрансКонтур Логистика",
+        "url": "https://omel42.github.io/transkontur-tms-lite/",
+        "description": "Организация автомобильных грузоперевозок и цифровой контроль рейсов"
+      }
+    </script>
   </head>
   <body>
-    <div id="workspace" class="workspace">
-      <aside class="sidebar" aria-label="Основная навигация">
-        <a class="brand" href="./" aria-label="ТрансКонтур, главная">
-          <span class="brand-mark" aria-hidden="true">ТК</span>
-          <span><b>ТрансКонтур</b><small>TMS Lite</small></span>
+    <a class="skip-link" href="#main-content">Перейти к содержанию</a>
+
+    <section class="marketing-site" id="marketing-site">
+      <header class="marketing-header" id="marketing-header">
+        <a class="brand brand--light" href="#top" aria-label="ТрансКонтур — на главную">
+          <img src="./assets/logo-mark.svg" width="42" height="42" alt="" />
+          <span><strong>ТрансКонтур</strong><small>логистика без слепых зон</small></span>
         </a>
 
-        <nav class="nav-list">
-          <button class="nav-item active" data-view="dashboard">
-            <span aria-hidden="true">⌂</span> Обзор
-          </button>
-          <button class="nav-item" data-view="trips">
-            <span aria-hidden="true">↗</span> Рейсы
-            <span class="nav-count" id="active-count">0</span>
-          </button>
-          <button class="nav-item" data-view="fleet">
-            <span aria-hidden="true">▣</span> Автопарк
-          </button>
-          <button class="nav-item" data-view="reports">
-            <span aria-hidden="true">◫</span> Экономика
-          </button>
-          <button class="nav-item" data-view="settings">
-            <span aria-hidden="true">⚙</span> Данные
-          </button>
+        <button class="icon-button marketing-menu-button" type="button" data-action="toggle-marketing-menu" aria-label="Открыть меню" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+
+        <nav class="marketing-nav" aria-label="Навигация по сайту">
+          <a href="#services">Возможности</a>
+          <a href="#control">Контроль рейса</a>
+          <a href="#process">Как работаем</a>
+          <a href="#carriers">Перевозчикам</a>
         </nav>
 
-        <div class="sidebar-card">
-          <span class="eyebrow">Документы</span>
-          <strong><span id="docs-count">0</span> рейса требуют внимания</strong>
-          <button class="text-button" data-view="trips" data-status="delivered">Проверить →</button>
+        <div class="header-actions">
+          <a class="text-button" href="#track">Отследить груз</a>
+          <a class="button button--small button--acid" href="#office">Рабочее демо</a>
         </div>
+      </header>
 
-        <div class="profile">
-          <span class="avatar">АК</span>
-          <span><b>Алексей</b><small>Диспетчер</small></span>
-          <button class="icon-button" title="Демо-профиль">•••</button>
+      <main id="main-content">
+        <section class="hero" id="top">
+          <div class="hero-media" aria-hidden="true"></div>
+          <div class="hero-grid container">
+            <div class="hero-copy reveal">
+              <span class="eyebrow"><i></i> Автомобильные грузоперевозки по России</span>
+              <h1>Груз движется.<br /><em>Вы всё видите.</em></h1>
+              <p>
+                Один ответственный логист, понятный статус рейса и документы в одном контуре —
+                от первого звонка до закрывающих.
+              </p>
+              <div class="hero-actions">
+                <a class="button button--acid" href="#quick-quote">Рассчитать перевозку <span>↗</span></a>
+                <a class="button button--ghost" href="#control">Как устроен контроль</a>
+              </div>
+              <div class="hero-trust">
+                <div><strong>01</strong><span>Заявка и ставка<br />зафиксированы</span></div>
+                <div><strong>02</strong><span>Рейс и документы<br />в одной карточке</span></div>
+                <div><strong>03</strong><span>Клиент видит статус<br />без звонков</span></div>
+              </div>
+            </div>
+
+            <form class="quote-card reveal" id="hero-quote-form">
+              <div class="quote-card-head">
+                <div>
+                  <span class="section-kicker">Быстрый расчёт</span>
+                  <h2>Куда везём?</h2>
+                </div>
+                <span class="live-badge"><i></i> Новая заявка</span>
+              </div>
+              <div class="route-inputs">
+                <label><span>Откуда</span><input name="from" autocomplete="address-level2" placeholder="Москва" required /></label>
+                <span class="route-line" aria-hidden="true"></span>
+                <label><span>Куда</span><input name="to" autocomplete="address-level2" placeholder="Казань" required /></label>
+              </div>
+              <div class="form-grid form-grid--2">
+                <label><span>Груз</span><input name="cargo" placeholder="Паллеты, оборудование…" required /></label>
+                <label><span>Вес, т</span><input name="weight" inputmode="decimal" placeholder="20" /></label>
+                <label><span>Дата погрузки</span><input name="pickup" type="date" /></label>
+                <label><span>Телефон</span><input name="phone" type="tel" placeholder="+7 900 000-00-00" required /></label>
+              </div>
+              <button class="button button--dark button--wide" type="submit">Получить расчёт <span>→</span></button>
+              <p class="form-note">Демо: заявка сохранится локально и появится в кабинете логиста.</p>
+            </form>
+          </div>
+          <div class="hero-scroll"><span></span> листайте</div>
+        </section>
+
+        <section class="cargo-strip" aria-label="Типы перевозок">
+          <div class="container cargo-strip-inner">
+            <span>Тент · 20 т</span><i></i><span>Рефрижератор</span><i></i><span>Выделенная машина</span><i></i><span>Сборный груз</span><i></i><span>Негабарит</span>
+          </div>
+        </section>
+
+        <section class="section services-section" id="services">
+          <div class="container">
+            <div class="section-heading reveal">
+              <div><span class="section-kicker">Не просто «машина найдена»</span><h2>Сервис без<br /><em>чёрного ящика</em></h2></div>
+              <p>Мы превращаем привычные звонки и чаты в прозрачный процесс. Логист остаётся рядом, а вся важная информация не теряется между участниками.</p>
+            </div>
+
+            <div class="service-grid">
+              <article class="service-card service-card--feature reveal">
+                <span class="card-index">01</span>
+                <div class="service-icon">↗</div>
+                <h3>Подбор машины под задачу</h3>
+                <p>Тип кузова, тоннаж, температурный режим, верхняя или боковая загрузка — параметры фиксируются до поиска перевозчика.</p>
+                <ul><li>Проверка перевозчика и документов</li><li>Согласование ставки и условий</li><li>Контакты ответственных лиц</li></ul>
+              </article>
+              <article class="service-card reveal">
+                <span class="card-index">02</span><div class="service-icon">⌁</div>
+                <h3>Контроль рейса</h3>
+                <p>Погрузка, движение, выгрузка и отклонения — на одной временной шкале.</p>
+                <div class="mini-route"><i></i><span></span><i></i><span></span><i></i></div>
+              </article>
+              <article class="service-card reveal">
+                <span class="card-index">03</span><div class="service-icon">✓</div>
+                <h3>Документы без охоты</h3>
+                <p>Заявка, ТТН/ТрН, акты и счета привязаны к рейсу. Видно, чего не хватает для оплаты.</p>
+                <div class="document-stack"><span>Заявка <b>готово</b></span><span>Транспортная накладная <b>в пути</b></span></div>
+              </article>
+              <article class="service-card service-card--lime reveal">
+                <span class="card-index">04</span><div class="service-icon">₽</div>
+                <h3>Понятные расчёты</h3>
+                <p>Ставка и условия зафиксированы. Логист видит маржу, клиент — согласованную стоимость и статус документов.</p>
+                <a href="#office/finance">Посмотреть экономику рейсов <span>→</span></a>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section control-section" id="control">
+          <div class="container control-grid">
+            <div class="control-copy reveal">
+              <span class="section-kicker">Один рейс — одна правда</span>
+              <h2>От звонка до оплаты <em>в одном контуре</em></h2>
+              <p>У клиента, водителя и логиста разные экраны, но одни и те же актуальные данные. Без пересказов по кругу.</p>
+              <div class="control-points">
+                <div><b>01</b><span><strong>Клиент</strong> видит маршрут, статус, ETA и документы</span></div>
+                <div><b>02</b><span><strong>Водитель</strong> получает адреса, контакты и одну следующую кнопку</span></div>
+                <div><b>03</b><span><strong>Логист</strong> управляет заявками, рейсами и деньгами</span></div>
+              </div>
+              <a class="button button--acid" href="#track/TK-24031">Открыть клиентскую ссылку</a>
+            </div>
+
+            <div class="dispatch-window reveal" aria-label="Пример экрана контроля перевозки">
+              <div class="window-bar"><div><i></i><i></i><i></i></div><span>control.transkontur.ru / TK-24031</span><b>ДЕМО</b></div>
+              <div class="dispatch-layout">
+                <aside class="mock-sidebar">
+                  <img src="./assets/logo-mark.svg" alt="" />
+                  <span class="active"></span><span></span><span></span><span></span><span></span>
+                </aside>
+                <div class="mock-main">
+                  <div class="mock-head"><div><small>РЕЙС TK-24031</small><h3>Москва → Казань</h3></div><span class="status-pill status-pill--moving">● В пути</span></div>
+                  <div class="mock-stats"><div><small>Расчётное прибытие</small><strong>Сегодня, 18:40</strong></div><div><small>Машина</small><strong>Тент · 20 т</strong></div><div><small>Документы</small><strong>2 из 3</strong></div></div>
+                  <div class="mock-map">
+                    <span class="map-city map-city--a"><i></i>Москва</span>
+                    <span class="map-city map-city--b"><i></i>Казань</span>
+                    <span class="map-road"></span><span class="map-truck">▰</span>
+                    <span class="map-note">ETA 18:40<br /><b>без отклонений</b></span>
+                  </div>
+                  <div class="mock-bottom">
+                    <div class="mock-timeline"><span class="done"></span><span class="done"></span><span class="current"></span><span></span><span></span></div>
+                    <div class="mock-doc"><b>✓</b><span>Фото ТрН загружено<small>сегодня, 11:24</small></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section process-section" id="process">
+          <div class="container">
+            <div class="section-heading reveal">
+              <div><span class="section-kicker">Предсказуемый процесс</span><h2>Четыре шага.<br /><em>Ноль догадок.</em></h2></div>
+              <p>Первый контакт может остаться телефонным. Система начинается там, где важно ничего не забыть и дать клиенту контроль.</p>
+            </div>
+            <div class="process-track">
+              <article class="process-step reveal"><span>01</span><div class="process-dot"></div><h3>Фиксируем задачу</h3><p>Маршрут, груз, даты, условия погрузки и контактные лица.</p></article>
+              <article class="process-step reveal"><span>02</span><div class="process-dot"></div><h3>Подбираем перевозчика</h3><p>Сверяем машину, водителя, документы, ставку и ограничения.</p></article>
+              <article class="process-step reveal"><span>03</span><div class="process-dot"></div><h3>Ведём рейс</h3><p>Контрольные точки, связь с водителем и предупреждение об отклонениях.</p></article>
+              <article class="process-step reveal"><span>04</span><div class="process-dot"></div><h3>Закрываем документы</h3><p>Фото с выгрузки, оригиналы, счёт, акт и контроль оплаты.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section nuances-section">
+          <div class="container">
+            <div class="nuances-intro reveal"><span class="section-kicker">Детали решают</span><h2>То, что обычно всплывает <em>в последний момент</em></h2></div>
+            <div class="nuance-grid">
+              <article class="nuance-card reveal"><span>°C</span><h3>Температурный режим</h3><p>Диапазон температуры, санитарная обработка и подтверждение режима.</p></article>
+              <article class="nuance-card reveal"><span>↕</span><h3>Способ загрузки</h3><p>Задняя, боковая или верхняя; ремни, коники, гидроборт и пропуск.</p></article>
+              <article class="nuance-card reveal"><span>▣</span><h3>Документы</h3><p>Доверенности, ТрН/ТТН, УПД, акты, фото пломбы и оригиналы.</p></article>
+              <article class="nuance-card reveal"><span>₽</span><h3>Условия оплаты</h3><p>С НДС или без, отсрочка, срок после оригиналов и статус дебиторки.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section carrier-section" id="carriers">
+          <div class="container carrier-panel reveal">
+            <div>
+              <span class="section-kicker">Перевозчикам</span>
+              <h2>Меньше переписки.<br /><em>Больше понятных рейсов.</em></h2>
+              <p>Маршрут, ставка, условия и контакты собраны в одном месте. Документы можно передать прямо со смартфона.</p>
+              <a class="button button--acid" href="#carrier/TK-24031">Посмотреть кабинет перевозчика</a>
+            </div>
+            <div class="carrier-phone">
+              <div class="phone-notch"></div>
+              <div class="phone-head"><img src="./assets/logo-mark.svg" alt="" /><span>Рейс TK-24031<small>Москва → Казань</small></span><b>В пути</b></div>
+              <div class="phone-money"><small>К выплате</small><strong>126 000 ₽</strong><span>После оригиналов</span></div>
+              <div class="phone-task"><i>✓</i><span>Заявка подписана<small>12 сентября, 14:20</small></span></div>
+              <div class="phone-task"><i>↑</i><span>Загрузить ТрН<small>Фото после выгрузки</small></span></div>
+              <button type="button">Открыть рейс →</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section final-cta" id="quick-quote">
+          <div class="container final-cta-grid">
+            <div class="reveal"><span class="section-kicker">Начнём с маршрута</span><h2>Расскажите,<br /><em>что нужно перевезти</em></h2><p>Не обязательно заполнять всё идеально. Логист уточнит ограничения, предложит формат машины и зафиксирует договорённости.</p></div>
+            <form class="final-form reveal" id="final-quote-form">
+              <div class="form-grid form-grid--2">
+                <label><span>Откуда</span><input name="from" placeholder="Город погрузки" required /></label>
+                <label><span>Куда</span><input name="to" placeholder="Город выгрузки" required /></label>
+              </div>
+              <label><span>Что везём</span><textarea name="cargo" rows="3" placeholder="Груз, вес, объём, особые условия" required></textarea></label>
+              <div class="form-grid form-grid--2">
+                <label><span>Как к вам обращаться</span><input name="name" placeholder="Имя" /></label>
+                <label><span>Телефон</span><input name="phone" type="tel" placeholder="+7 900 000-00-00" required /></label>
+              </div>
+              <button class="button button--acid button--wide" type="submit">Отправить заявку <span>→</span></button>
+              <p class="form-note">Это интерактивный прототип: данные остаются только в вашем браузере.</p>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <footer class="marketing-footer">
+        <div class="container footer-grid">
+          <a class="brand brand--light" href="#top"><img src="./assets/logo-mark.svg" width="42" height="42" alt="" /><span><strong>ТрансКонтур</strong><small>логистика без слепых зон</small></span></a>
+          <div><strong>Сервис</strong><a href="#services">Возможности</a><a href="#control">Контроль рейса</a><a href="#process">Как работаем</a></div>
+          <div><strong>Кабинеты</strong><a href="#office">Логист</a><a href="#track/TK-24031">Клиент</a><a href="#carrier/TK-24031">Перевозчик</a><a href="#driver/TK-24031">Водитель</a></div>
+          <div class="footer-note"><span>ПРОТОТИП · 2026</span><p>Концепт цифровой экспедиторской компании. Не является публичной офертой.</p></div>
+        </div>
+      </footer>
+    </section>
+
+    <section class="role-page" id="role-page" hidden></section>
+
+    <div class="app-shell" id="workspace" hidden>
+      <aside class="app-sidebar" id="app-sidebar">
+        <a class="brand brand--sidebar" href="#office/dashboard"><img src="./assets/logo-mark.svg" width="42" height="42" alt="" /><span><strong>ТрансКонтур</strong><small>операционный центр</small></span></a>
+        <nav class="app-nav" aria-label="Рабочие разделы">
+          <span class="nav-caption">Управление</span>
+          <button type="button" data-view="dashboard"><span class="nav-icon">⌂</span>Главная</button>
+          <button type="button" data-view="leads"><span class="nav-icon">↗</span>Заявки <b id="lead-count"></b></button>
+          <button type="button" data-view="trips"><span class="nav-icon">▰</span>Рейсы</button>
+          <button type="button" data-view="clients"><span class="nav-icon">◎</span>Клиенты</button>
+          <button type="button" data-view="finance"><span class="nav-icon">₽</span>Финансы</button>
+          <button type="button" data-view="network"><span class="nav-icon">⌁</span>Перевозчики</button>
+          <span class="nav-caption">Демо ролей</span>
+          <a href="#track/TK-24031"><span class="nav-icon">◉</span>Кабинет клиента</a>
+          <a href="#carrier/TK-24031"><span class="nav-icon">◇</span>Кабинет перевозчика</a>
+          <a href="#driver/TK-24031"><span class="nav-icon">●</span>Экран водителя</a>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="demo-meter"><span><i></i> Данные локально</span><small>Работает без сервера</small></div>
+          <button class="profile-button" type="button"><span>АК</span><div><strong>Алексей Ковалёв</strong><small>Владелец · логист</small></div><b>···</b></button>
         </div>
       </aside>
 
-      <main class="main">
-        <header class="topbar">
-          <button class="mobile-menu icon-button" id="mobile-menu" aria-label="Открыть меню">☰</button>
-          <label class="search">
-            <span aria-hidden="true">⌕</span>
-            <input id="global-search" type="search" placeholder="Номер, клиент или город" autocomplete="off" />
-            <kbd>⌘ K</kbd>
-          </label>
-          <div class="top-actions">
-            <span class="connection"><i></i> Локально</span>
-            <button class="button primary" data-action="new-trip"><span>＋</span> Новый рейс</button>
-          </div>
+      <main class="app-main">
+        <header class="app-topbar">
+          <button class="icon-button app-menu-button" type="button" data-action="toggle-app-menu" aria-label="Открыть меню">☰</button>
+          <label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="Рейс, клиент, маршрут…" /></label>
+          <div class="topbar-actions"><span class="sync-status"><i></i> Демо · локально</span><button class="icon-button" type="button" aria-label="Уведомления">◌<b class="notification-dot"></b></button><button class="button button--small button--dark" type="button" data-action="new-lead">＋ Новая заявка</button></div>
         </header>
-        <section id="app" class="page" aria-live="polite"></section>
+        <section class="app-content" id="app"></section>
       </main>
+
+      <nav class="mobile-bottom-nav" aria-label="Мобильная навигация">
+        <button type="button" data-view="dashboard"><span>⌂</span>Главная</button>
+        <button type="button" data-view="leads"><span>↗</span>Заявки</button>
+        <button class="mobile-add" type="button" data-action="new-lead"><span>＋</span></button>
+        <button type="button" data-view="trips"><span>▰</span>Рейсы</button>
+        <button type="button" data-view="finance"><span>₽</span>Финансы</button>
+      </nav>
+      <button class="sidebar-scrim" type="button" data-action="toggle-app-menu" aria-label="Закрыть меню"></button>
     </div>
 
-    <div class="modal-backdrop" id="trip-modal" hidden>
-      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="trip-modal-title">
-        <div class="modal-head">
-          <div>
-            <span class="eyebrow">Новая заявка</span>
-            <h2 id="trip-modal-title">Создать рейс</h2>
-          </div>
-          <button class="icon-button" data-action="close-modal" aria-label="Закрыть">×</button>
-        </div>
-        <form id="trip-form">
-          <div class="form-section">
-            <h3>Клиент и маршрут</h3>
-            <div class="form-grid">
-              <label class="field wide"><span>Клиент *</span><input name="client" required placeholder="ООО «Компания»" /></label>
-              <label class="field"><span>Контакт</span><input name="contact" placeholder="Имя" /></label>
-              <label class="field"><span>Телефон</span><input name="phone" inputmode="tel" placeholder="+7 900 000-00-00" /></label>
-              <label class="field"><span>Откуда *</span><input name="from" required placeholder="Москва" /></label>
-              <label class="field"><span>Куда *</span><input name="to" required placeholder="Казань" /></label>
-              <label class="field"><span>Погрузка *</span><input name="pickupAt" type="datetime-local" required /></label>
-              <label class="field"><span>Выгрузка *</span><input name="deliveryAt" type="datetime-local" required /></label>
-            </div>
-          </div>
-          <div class="form-section">
-            <h3>Груз и экономика</h3>
-            <div class="form-grid">
-              <label class="field wide"><span>Груз *</span><input name="cargo" required placeholder="Что везём" /></label>
-              <label class="field"><span>Вес, т</span><input name="weight" type="number" min="0" step="0.1" placeholder="20" /></label>
-              <label class="field"><span>Цена клиенту, ₽ *</span><input name="price" type="number" min="0" required placeholder="120000" /></label>
-              <label class="field"><span>Плановые затраты, ₽ *</span><input name="plannedCost" type="number" min="0" required placeholder="85000" /></label>
-            </div>
-          </div>
-          <div class="form-section">
-            <h3>Экипаж</h3>
-            <div class="form-grid">
-              <label class="field"><span>Водитель</span><select name="driverId" id="driver-select"></select></label>
-              <label class="field"><span>Автомобиль</span><select name="vehicleId" id="vehicle-select"></select></label>
-              <label class="field wide"><span>Комментарий</span><textarea name="comment" rows="3" placeholder="Особые условия, контакты на точках"></textarea></label>
-            </div>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="button secondary" data-action="close-modal">Отмена</button>
-            <button type="submit" class="button primary">Создать рейс</button>
-          </div>
-        </form>
-      </section>
-    </div>
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+    <aside class="drawer-panel" id="drawer-panel" hidden aria-label="Подробности"></aside>
+    <div class="modal-backdrop" id="modal-backdrop" hidden></div>
+    <section class="modal-panel" id="modal-panel" hidden role="dialog" aria-modal="true"></section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <div class="drawer-backdrop" id="drawer-backdrop" hidden>
-      <aside class="drawer" id="trip-drawer" aria-label="Карточка рейса"></aside>
-    </div>
-
-    <input id="import-file" type="file" accept="application/json" hidden />
-    <div id="toast" class="toast" role="status" hidden></div>
-
-    <script type="module" src="./src/app.js?v=3"></script>
+    <script type="module" src="./src/app.js?v=5"></script>
   </body>
 </html>

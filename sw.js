@@ -1,5 +1,18 @@
-const CACHE = "transkontur-v3";
-const ASSETS = ["./", "./index.html", "./styles.css?v=3", "./src/app.js?v=3", "./src/domain.js", "./src/seed.js", "./icon.svg"];
+const CACHE = "transkontur-v5";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./styles.css?v=5",
+  "./app.css?v=5",
+  "./responsive.css?v=5",
+  "./fix.css?v=5",
+  "./src/app.js?v=5",
+  "./src/domain.js?v=5",
+  "./src/seed.js?v=5",
+  "./assets/logo-mark.svg",
+  "./assets/hero-logistics.jpg",
+  "./icon.svg"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
@@ -13,5 +26,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });

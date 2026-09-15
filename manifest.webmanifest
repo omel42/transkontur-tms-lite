@@ -1,11 +1,11 @@
 {
-  "name": "ТрансКонтур — TMS Lite",
+  "name": "ТрансКонтур — логистика без слепых зон",
   "short_name": "ТрансКонтур",
-  "description": "Диспетчерская для небольших автоперевозчиков",
+  "description": "Заявки, рейсы, документы и расчёты в одном логистическом контуре",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f4f6f8",
-  "theme_color": "#18221d",
+  "background_color": "#07111b",
+  "theme_color": "#07111b",
   "icons": [
     {
       "src": "./icon.svg",

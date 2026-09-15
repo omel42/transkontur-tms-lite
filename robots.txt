@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://omel42.github.io/transkontur-tms-lite/sitemap.xml

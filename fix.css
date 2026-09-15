@@ -1,0 +1,5 @@
+.role-page{overflow-x:hidden}
+.tracking-grid,.tracking-grid>*{min-width:0}
+.role-timeline{min-width:0;overflow:hidden}
+.tracking-info-row b{max-width:62%;white-space:normal;text-align:right}
+@media(max-width:600px){.role-progress{max-width:100%}}
