@@ -126,7 +126,7 @@ class _Header extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ТрансКонтур',
+                    'РЕЙС',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 17,
@@ -182,9 +182,9 @@ class _Header extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 25),
-        const Text(
-          'Доброе утро, Виталий',
-          style: TextStyle(
+        Text(
+          '${_greeting(DateTime.now())}, Виталий',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 26,
             fontWeight: FontWeight.w800,
@@ -221,6 +221,13 @@ class _Header extends StatelessWidget {
   );
 }
 
+String _greeting(DateTime now) => switch (now.hour) {
+  >= 5 && < 12 => 'Доброе утро',
+  >= 12 && < 18 => 'Добрый день',
+  >= 18 && < 23 => 'Добрый вечер',
+  _ => 'Доброй ночи',
+};
+
 class _Metric extends StatelessWidget {
   const _Metric({required this.value, required this.label});
   final String value;
@@ -228,7 +235,7 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(13),
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: Colors.white.withValues(alpha: .065),
       borderRadius: BorderRadius.circular(17),
@@ -237,26 +244,38 @@ class _Metric extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.acid,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -.4,
+        SizedBox(
+          width: double.infinity,
+          height: 23,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.acid,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -.4,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 3),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFF95A4AD),
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
+        SizedBox(
+          height: 23,
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.fade,
+            style: const TextStyle(
+              color: Color(0xFF95A4AD),
+              fontSize: 8.5,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -276,7 +295,7 @@ class _VoiceHero extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFBEFA32), Color(0xFFDFFF75)],
+          colors: [Color(0xFF3F70DF), Color(0xFF65A6E8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -297,12 +316,12 @@ class _VoiceHero extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.circle, color: AppColors.green, size: 8),
+                    Icon(Icons.circle, color: AppColors.cyan, size: 8),
                     SizedBox(width: 7),
                     Text(
                       'НОВЫЙ РЕЙС ЗА МИНУТУ',
                       style: TextStyle(
-                        color: AppColors.green,
+                        color: Colors.white,
                         fontSize: 9.5,
                         letterSpacing: 1.1,
                         fontWeight: FontWeight.w900,
@@ -314,7 +333,7 @@ class _VoiceHero extends StatelessWidget {
                 Text(
                   'Наговорите,\nчто договорились',
                   style: TextStyle(
-                    color: AppColors.ink,
+                    color: Colors.white,
                     fontSize: 25,
                     height: 1.02,
                     fontWeight: FontWeight.w900,
@@ -325,7 +344,7 @@ class _VoiceHero extends StatelessWidget {
                 Text(
                   'Маршрут, груз, дата и ставка сами попадут в заявку.',
                   style: TextStyle(
-                    color: Color(0xFF405123),
+                    color: Color(0xFFE4EDF8),
                     fontSize: 12.5,
                     height: 1.35,
                   ),

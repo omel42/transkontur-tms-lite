@@ -221,7 +221,7 @@ class _LawCard extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                'До 1 марта 2027 действует нештрафуемый период. Демо показывает подготовку документов, но не отправляет их оператору.',
+                'Для автоперевозок электронными становятся транспортная накладная, заказ / заявка и экспедиторские документы. Обмен идёт через аккредитованного оператора ИС ЭПД.',
                 style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 10.8,
@@ -480,6 +480,7 @@ class DocumentDetailScreen extends StatelessWidget {
                   value: trip.carrier.isEmpty ? 'Не назначен' : trip.carrier,
                 ),
                 _PreviewLine(label: 'Ставка', value: money(trip.clientRate)),
+                _PreviewLine(label: 'Формат', value: kind.format),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 7,
@@ -562,7 +563,17 @@ class DocumentDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 9),
           FilledButton.tonalIcon(
-            onPressed: () => _showSigning(context, state),
+            onPressed:
+                () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder:
+                        (_) => SigningFlowScreen(
+                          trip: trip,
+                          kind: kind,
+                          readiness: state,
+                        ),
+                  ),
+                ),
             icon: const Icon(Icons.draw_outlined),
             label: const Text('Проверить и подписать'),
           ),
@@ -639,36 +650,368 @@ class DocumentDetailScreen extends StatelessWidget {
           ),
     );
   }
+}
 
-  void _showSigning(BuildContext context, DocumentReadiness state) {
-    showDialog<void>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            icon: Icon(
-              state.ready
-                  ? Icons.verified_rounded
-                  : Icons.warning_amber_rounded,
-              color: state.ready ? AppColors.green : AppColors.orange,
-              size: 34,
-            ),
-            title: Text(
-              state.ready ? 'Документ проверен' : 'Есть незаполненные поля',
-            ),
-            content: Text(
-              state.ready
-                  ? 'В рабочей версии здесь выбирается сертификат УКЭП и документ передаётся оператору ИС ЭПД. В демо внешняя отправка отключена.'
-                  : 'Сначала добавьте: ${state.missing.join(', ')}. Черновик сохранён и доступен для печати.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Закрыть'),
+class SigningFlowScreen extends StatefulWidget {
+  const SigningFlowScreen({
+    super.key,
+    required this.trip,
+    required this.kind,
+    required this.readiness,
+  });
+
+  final Trip trip;
+  final TransportDocumentKind kind;
+  final DocumentReadiness readiness;
+
+  @override
+  State<SigningFlowScreen> createState() => _SigningFlowScreenState();
+}
+
+class _SigningFlowScreenState extends State<SigningFlowScreen> {
+  bool employee = false;
+  bool certificateConnected = false;
+  bool powerOfAttorney = false;
+  String operatorName = 'Оператор ИС ЭПД (демо)';
+  bool prepared = false;
+  bool signed = false;
+
+  bool get canPrepare =>
+      widget.readiness.ready &&
+      certificateConnected &&
+      (!employee || powerOfAttorney);
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.paper,
+    appBar: AppBar(
+      backgroundColor: AppColors.paper,
+      title: const Text(
+        'Подпись и отправка',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 28),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            color: AppColors.ink,
+            borderRadius: BorderRadius.circular(23),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.security_rounded, color: AppColors.cyan),
+              const SizedBox(height: 12),
+              Text(
+                '${widget.kind.shortTitle} · ${widget.trip.number}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.kind.isEpd
+                    ? 'Телефон готовит XML и отправляет его через API оператора в «Госключ». Ключ остаётся в государственном приложении. После подтверждения подпись возвращается оператору ИС ЭПД.'
+                    : 'Телефон готовит файл, отправляет его в «Госключ» и получает статус подписания через оператора ЭДО.',
+                style: const TextStyle(
+                  color: Color(0xFFB6C3CB),
+                  fontSize: 11,
+                  height: 1.45,
+                ),
               ),
             ],
           ),
-    );
-  }
+        ),
+        const SizedBox(height: 16),
+        const SectionTitle(title: 'Кто подписывает'),
+        const SizedBox(height: 9),
+        SegmentedButton<bool>(
+          segments: const [
+            ButtonSegment(
+              value: false,
+              icon: Icon(Icons.business_center_outlined),
+              label: Text('Руководитель'),
+            ),
+            ButtonSegment(
+              value: true,
+              icon: Icon(Icons.badge_outlined),
+              label: Text('Сотрудник'),
+            ),
+          ],
+          selected: {employee},
+          onSelectionChanged:
+              (value) => setState(() {
+                employee = value.first;
+                if (!employee) powerOfAttorney = false;
+                prepared = false;
+                signed = false;
+              }),
+        ),
+        const SizedBox(height: 13),
+        _SigningCheck(
+          icon: Icons.key_rounded,
+          title:
+              employee
+                  ? '«Госключ»: КЭП сотрудника'
+                  : '«Госключ»: КЭП организации / ИП',
+          detail:
+              certificateConnected
+                  ? 'Учётная запись связана · сертификат доступен'
+                  : 'Связать ЕСИА и выбрать сертификат через оператора',
+          checked: certificateConnected,
+          onTap:
+              () => setState(() {
+                certificateConnected = !certificateConnected;
+                prepared = false;
+                signed = false;
+              }),
+        ),
+        if (employee) ...[
+          const SizedBox(height: 9),
+          _SigningCheck(
+            icon: Icons.assignment_ind_outlined,
+            title: 'Машиночитаемая доверенность',
+            detail:
+                powerOfAttorney
+                    ? 'МЧД найдена · полномочия приложены'
+                    : 'Для представителя ООО полномочия подтверждаются МЧД',
+            checked: powerOfAttorney,
+            onTap:
+                () => setState(() {
+                  powerOfAttorney = !powerOfAttorney;
+                  prepared = false;
+                  signed = false;
+                }),
+          ),
+        ],
+        const SizedBox(height: 18),
+        const SectionTitle(title: 'Канал обмена'),
+        const SizedBox(height: 9),
+        DropdownButtonFormField<String>(
+          value: operatorName,
+          decoration: const InputDecoration(labelText: 'Оператор ИС ЭПД'),
+          items: const [
+            DropdownMenuItem(
+              value: 'Оператор ИС ЭПД (демо)',
+              child: Text('Оператор ИС ЭПД (демо)'),
+            ),
+            DropdownMenuItem(
+              value: 'СБИС / Saby EDO',
+              child: Text('СБИС / Saby EDO'),
+            ),
+            DropdownMenuItem(
+              value: 'Другой аккредитованный оператор',
+              child: Text('Другой оператор'),
+            ),
+          ],
+          onChanged:
+              (value) => setState(() {
+                operatorName = value ?? operatorName;
+                prepared = false;
+                signed = false;
+              }),
+        ),
+        const SizedBox(height: 16),
+        _ExchangeStep(
+          number: '1',
+          title: 'Проверка обязательных полей',
+          done: widget.readiness.ready,
+        ),
+        _ExchangeStep(
+          number: '2',
+          title: 'Задание отправлено в «Госключ»',
+          done: prepared,
+        ),
+        _ExchangeStep(
+          number: '3',
+          title: 'Пользователь подтвердил подпись',
+          done: signed,
+        ),
+        _ExchangeStep(
+          number: '4',
+          title: 'Подпись и сертификат получены оператором',
+          done: signed,
+        ),
+        _ExchangeStep(number: '5', title: 'Квитанция ГИС ЭПД', done: false),
+        if (!widget.readiness.ready) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Не хватает: ${widget.readiness.missing.join(', ')}.',
+            style: const TextStyle(
+              color: AppColors.orange,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (!prepared)
+          ElevatedButton.icon(
+            onPressed:
+                canPrepare
+                    ? () => setState(() {
+                      prepared = true;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Демо: задание отправлено. В бою документ появится в «Госключе».',
+                          ),
+                        ),
+                      );
+                    })
+                    : null,
+            icon: const Icon(Icons.send_to_mobile_rounded),
+            label: const Text('Отправить в «Госключ»'),
+          )
+        else if (!signed)
+          ElevatedButton.icon(
+            onPressed:
+                () => setState(() {
+                  signed = true;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Демо: оператор получил подпись и сертификат подписанта',
+                      ),
+                    ),
+                  );
+                }),
+            icon: const Icon(Icons.sync_rounded),
+            label: const Text('Проверить статус подписи'),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: AppColors.green.withValues(alpha: .1),
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.verified_rounded, color: AppColors.green),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Подпись получена. Документ готов к проверке оператором ИС ЭПД.',
+                    style: TextStyle(
+                      color: AppColors.green,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 9),
+        const Text(
+          'В MVP показан сценарий без реальной отправки. В продакшене приложение передаёт файл через API оператора или интеграцию «Госключа», проверяет статус и получает отделённую подпись. Закрытый ключ в «РЕЙС» не попадает. Для подписи сотрудника ООО может потребоваться МЧД.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.muted, fontSize: 10.5, height: 1.4),
+        ),
+      ],
+    ),
+  );
+}
+
+class _SigningCheck extends StatelessWidget {
+  const _SigningCheck({
+    required this.icon,
+    required this.title,
+    required this.detail,
+    required this.checked,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title;
+  final String detail;
+  final bool checked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(18),
+    child: Ink(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: checked ? AppColors.green : AppColors.line),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: checked ? AppColors.green : AppColors.muted),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 10.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            checked
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            color: checked ? AppColors.green : AppColors.muted,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ExchangeStep extends StatelessWidget {
+  const _ExchangeStep({
+    required this.number,
+    required this.title,
+    required this.done,
+  });
+  final String number;
+  final String title;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: 14,
+          backgroundColor: done ? AppColors.green : AppColors.line,
+          child: Text(
+            done ? '✓' : number,
+            style: TextStyle(
+              color: done ? Colors.white : AppColors.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 }
 
 class DocumentPdfScreen extends StatelessWidget {
@@ -742,7 +1085,7 @@ class TinyStatus extends StatelessWidget {
     child: Text(
       text,
       style: const TextStyle(
-        color: AppColors.ink,
+        color: Colors.white,
         fontSize: 8,
         fontWeight: FontWeight.w900,
       ),

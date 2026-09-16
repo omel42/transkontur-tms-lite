@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,6 +8,7 @@ import '../domain/models.dart';
 class AppStore extends ChangeNotifier {
   AppStore() {
     _restoreDraft();
+    _restoreCounterparties();
   }
 
   TripDraft draft = const TripDraft();
@@ -93,7 +96,7 @@ class AppStore extends ChangeNotifier {
     ),
   ];
 
-  final clients = const [
+  final List<Counterparty> clients = [
     Counterparty(
       id: 'c1',
       name: 'НордПром',
@@ -135,7 +138,7 @@ class AppStore extends ChangeNotifier {
     ),
   ];
 
-  final carriers = const [
+  final List<Counterparty> carriers = [
     Counterparty(
       id: 'p1',
       name: 'ИП Ковалёв',
@@ -205,6 +208,47 @@ class AppStore extends ChangeNotifier {
 
   int get activeTrips => trips.where((e) => e.status != TripStatus.done).length;
   int get monthMargin => trips.fold(0, (sum, trip) => sum + trip.margin);
+
+  void addCarrier(Counterparty carrier) {
+    addCounterparty(carrier.copyWith(kind: 'carrier'));
+  }
+
+  void addCounterparty(Counterparty counterparty) {
+    final list = counterparty.kind == 'client' ? clients : carriers;
+    list.insert(0, counterparty);
+    _saveCounterparties();
+    notifyListeners();
+  }
+
+  void updateCarrier(Counterparty carrier) {
+    final index = carriers.indexWhere((item) => item.id == carrier.id);
+    if (index < 0) return;
+    carriers[index] = carrier;
+    _saveCounterparties();
+    notifyListeners();
+  }
+
+  void updateCounterparty(Counterparty counterparty) {
+    final list = counterparty.kind == 'client' ? clients : carriers;
+    final index = list.indexWhere((item) => item.id == counterparty.id);
+    if (index < 0) return;
+    list[index] = counterparty;
+    _saveCounterparties();
+    notifyListeners();
+  }
+
+  void removeCarrier(String id) {
+    carriers.removeWhere((item) => item.id == id);
+    _saveCounterparties();
+    notifyListeners();
+  }
+
+  void removeCounterparty(Counterparty counterparty) {
+    final list = counterparty.kind == 'client' ? clients : carriers;
+    list.removeWhere((item) => item.id == counterparty.id);
+    _saveCounterparties();
+    notifyListeners();
+  }
 
   void updateDraft(TripDraft value) {
     draft = value;
@@ -283,5 +327,39 @@ class AppStore extends ChangeNotifier {
         await prefs.remove('trip_draft');
       }
     }
+  }
+
+  Future<void> _restoreCounterparties() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final entry in {'clients': clients, 'carriers': carriers}.entries) {
+      final value = prefs.getString(entry.key);
+      if (value == null) continue;
+      try {
+        final decoded = jsonDecode(value) as List<dynamic>;
+        entry.value
+          ..clear()
+          ..addAll(
+            decoded.map(
+              (item) => Counterparty.fromJson(item as Map<String, dynamic>),
+            ),
+          );
+      } catch (_) {
+        await prefs.remove(entry.key);
+      }
+    }
+    notifyListeners();
+  }
+
+  void _saveCounterparties() {
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(
+        'clients',
+        jsonEncode(clients.map((item) => item.toJson()).toList()),
+      );
+      prefs.setString(
+        'carriers',
+        jsonEncode(carriers.map((item) => item.toJson()).toList()),
+      );
+    });
   }
 }

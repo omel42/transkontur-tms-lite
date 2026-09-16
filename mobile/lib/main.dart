@@ -20,23 +20,23 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const TransKonturApp());
+  runApp(const ReysApp());
 }
 
-class TransKonturApp extends StatefulWidget {
-  const TransKonturApp({super.key});
+class ReysApp extends StatefulWidget {
+  const ReysApp({super.key});
 
   @override
-  State<TransKonturApp> createState() => _TransKonturAppState();
+  State<ReysApp> createState() => _ReysAppState();
 }
 
-class _TransKonturAppState extends State<TransKonturApp> {
+class _ReysAppState extends State<ReysApp> {
   final store = AppStore();
 
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    title: 'ТрансКонтур — мобильный экспедитор',
+    title: 'РЕЙС — мобильный экспедитор',
     theme: buildAppTheme(),
     home: Shell(store: store),
   );
@@ -149,7 +149,7 @@ class _ShellState extends State<Shell> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: openCreate,
           backgroundColor: AppColors.acid,
-          foregroundColor: AppColors.ink,
+          foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: const Text(
             'Новый рейс',

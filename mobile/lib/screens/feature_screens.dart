@@ -451,104 +451,255 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  int selected = 1;
+  late DateTime selectedDate = _day(DateTime.now());
+  final reminders = <_CalendarEntry>[];
+
+  DateTime get weekStart => selectedDate.subtract(
+    Duration(days: selectedDate.weekday - DateTime.monday),
+  );
+
+  List<_CalendarEntry> _entries(DateTime date) {
+    final entries = <_CalendarEntry>[];
+    for (final trip in widget.store.trips) {
+      if (_sameDay(trip.pickupAt, date)) {
+        entries.add(
+          _CalendarEntry(
+            at: trip.pickupAt,
+            type: 'Погрузка',
+            color: AppColors.orange,
+            title: '${trip.number} · ${trip.from}',
+            detail:
+                '${trip.client} · ${trip.carrier.isEmpty ? 'машина не назначена' : trip.driver}',
+          ),
+        );
+      }
+      final unloading = trip.pickupAt.add(const Duration(days: 1, hours: 5));
+      if (_sameDay(unloading, date) && trip.status != TripStatus.done) {
+        entries.add(
+          _CalendarEntry(
+            at: unloading,
+            type: 'Выгрузка',
+            color: AppColors.green,
+            title: '${trip.number} · ${trip.to}',
+            detail: '${trip.client} · плановое окно выгрузки',
+          ),
+        );
+      }
+    }
+    entries.addAll(reminders.where((entry) => _sameDay(entry.at, date)));
+    if (_sameDay(date, DateTime.now())) {
+      for (final trip in widget.store.trips.where(
+        (item) => item.status == TripStatus.documents,
+      )) {
+        entries.add(
+          _CalendarEntry(
+            at: DateTime(date.year, date.month, date.day, 16, 20),
+            type: 'Документы',
+            color: AppColors.blue,
+            title: 'Документы ${trip.number}',
+            detail: 'Проверить комплект и запросить недостающие файлы',
+          ),
+        );
+      }
+    }
+    entries.sort((a, b) => a.at.compareTo(b.at));
+    return entries;
+  }
 
   @override
   Widget build(BuildContext context) {
-    const days = [
-      ('СР', '16'),
-      ('ЧТ', '17'),
-      ('ПТ', '18'),
-      ('СБ', '19'),
-      ('ВС', '20'),
-    ];
+    final days = List.generate(
+      7,
+      (index) => weekStart.add(Duration(days: index)),
+    );
+    final entries = _entries(selectedDate);
+    final loads = entries.where((entry) => entry.type == 'Погрузка').length;
+    final unloads = entries.where((entry) => entry.type == 'Выгрузка').length;
     return Scaffold(
       backgroundColor: AppColors.paper,
-      appBar: AppBar(title: const Text('Календарь погрузок')),
+      appBar: AppBar(
+        title: const Text(
+          'Календарь рейсов',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        actions: [
+          TextButton(
+            onPressed:
+                () => setState(() => selectedDate = _day(DateTime.now())),
+            child: const Text('Сегодня'),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
-          SizedBox(
-            height: 76,
-            child: Row(
-              children: List.generate(days.length, (i) {
-                final day = days[i];
-                final active = selected == i;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: i == days.length - 1 ? 0 : 6,
-                    ),
-                    child: InkWell(
-                      onTap: () => setState(() => selected = i),
-                      borderRadius: BorderRadius.circular(17),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: active ? AppColors.ink : Colors.white,
-                          borderRadius: BorderRadius.circular(17),
-                          border: Border.all(
-                            color: active ? AppColors.ink : AppColors.line,
+          Row(
+            children: [
+              IconButton(
+                onPressed:
+                    () => setState(
+                      () =>
+                          selectedDate = selectedDate.subtract(
+                            const Duration(days: 7),
                           ),
+                    ),
+                icon: const Icon(Icons.chevron_left_rounded),
+              ),
+              Expanded(
+                child: Text(
+                  '${_month(selectedDate.month)} ${selectedDate.year}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed:
+                    () => setState(
+                      () =>
+                          selectedDate = selectedDate.add(
+                            const Duration(days: 7),
+                          ),
+                    ),
+                icon: const Icon(Icons.chevron_right_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 88,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: days.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 7),
+              itemBuilder: (context, i) {
+                final day = days[i];
+                final active = _sameDay(selectedDate, day);
+                final count = _entries(day).length;
+                return SizedBox(
+                  width: 58,
+                  child: InkWell(
+                    onTap: () => setState(() => selectedDate = day),
+                    borderRadius: BorderRadius.circular(17),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: active ? AppColors.ink : Colors.white,
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(
+                          color: active ? AppColors.ink : AppColors.line,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              day.$1,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _weekday(day.weekday),
+                            style: TextStyle(
+                              color: active ? AppColors.cyan : AppColors.muted,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            day.day.toString(),
+                            style: TextStyle(
+                              color: active ? Colors.white : AppColors.ink,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Container(
+                            width: 18,
+                            height: 18,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color:
+                                  count == 0
+                                      ? Colors.transparent
+                                      : active
+                                      ? Colors.white.withValues(alpha: .18)
+                                      : AppColors.blue.withValues(alpha: .1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              count == 0 ? '·' : count.toString(),
                               style: TextStyle(
-                                color:
-                                    active ? AppColors.acid : AppColors.muted,
+                                color: active ? Colors.white : AppColors.blue,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              day.$2,
-                              style: TextStyle(
-                                color: active ? Colors.white : AppColors.ink,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 );
-              }),
+              },
             ),
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _DayMetric(
+                label: 'Погрузки',
+                value: loads,
+                color: AppColors.orange,
+              ),
+              const SizedBox(width: 8),
+              _DayMetric(
+                label: 'Выгрузки',
+                value: unloads,
+                color: AppColors.green,
+              ),
+              const SizedBox(width: 8),
+              _DayMetric(
+                label: 'Всего',
+                value: entries.length,
+                color: AppColors.blue,
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
-          const SectionTitle(title: 'План дня', count: '3'),
+          SectionTitle(
+            title:
+                '${selectedDate.day} ${_month(selectedDate.month).toLowerCase()}',
+            count: entries.length.toString(),
+          ),
           const SizedBox(height: 10),
-          _ScheduleItem(
-            time: '08:30',
-            color: AppColors.orange,
-            title: 'ТК-1008 · Подольск',
-            detail: 'СтройВектор · машина не назначена',
-          ),
-          _ScheduleItem(
-            time: '11:00',
-            color: AppColors.green,
-            title: 'ТК-1007 · Москва',
-            detail: 'НордПром · водитель подтвердил',
-          ),
-          _ScheduleItem(
-            time: '16:20',
-            color: AppColors.blue,
-            title: 'Документы ТК-1005',
-            detail: 'Проверить транспортную накладную',
-          ),
+          if (entries.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.event_available_rounded, color: AppColors.muted),
+                  SizedBox(height: 8),
+                  Text('На этот день ничего не запланировано'),
+                ],
+              ),
+            )
+          else
+            ...entries.map(
+              (entry) => _ScheduleItem(
+                time: _time(entry.at),
+                type: entry.type,
+                color: entry.color,
+                title: entry.title,
+                detail: entry.detail,
+              ),
+            ),
           const SizedBox(height: 14),
           OutlinedButton.icon(
-            onPressed:
-                () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Свободное окно добавлено на 14:00'),
-                  ),
-                ),
+            onPressed: _addReminder,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Добавить напоминание'),
           ),
@@ -556,16 +707,170 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
+
+  Future<void> _addReminder() async {
+    final title = TextEditingController();
+    var time = const TimeOfDay(hour: 14, minute: 0);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: const Text('Новое напоминание'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: title,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Что сделать',
+                          hintText: 'Позвонить перевозчику',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.schedule_rounded),
+                        title: Text('Время · ${time.format(context)}'),
+                        onTap: () async {
+                          final value = await showTimePicker(
+                            context: context,
+                            initialTime: time,
+                          );
+                          if (value != null) setDialogState(() => time = value);
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Отмена'),
+                    ),
+                    ElevatedButton(
+                      onPressed:
+                          () => Navigator.pop(
+                            context,
+                            title.text.trim().isNotEmpty,
+                          ),
+                      child: const Text('Добавить'),
+                    ),
+                  ],
+                ),
+          ),
+    );
+    if (saved == true) {
+      reminders.add(
+        _CalendarEntry(
+          at: DateTime(
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
+            time.hour,
+            time.minute,
+          ),
+          type: 'Напоминание',
+          color: AppColors.blue,
+          title: title.text.trim(),
+          detail: 'Личная задача экспедитора',
+        ),
+      );
+      setState(() {});
+    }
+    title.dispose();
+  }
+
+  static DateTime _day(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+  static String _time(DateTime value) =>
+      '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  static String _weekday(int value) =>
+      const ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'][value - 1];
+  static String _month(int value) =>
+      const [
+        'Январь',
+        'Февраль',
+        'Март',
+        'Апрель',
+        'Май',
+        'Июнь',
+        'Июль',
+        'Август',
+        'Сентябрь',
+        'Октябрь',
+        'Ноябрь',
+        'Декабрь',
+      ][value - 1];
+}
+
+class _CalendarEntry {
+  const _CalendarEntry({
+    required this.at,
+    required this.type,
+    required this.color,
+    required this.title,
+    required this.detail,
+  });
+  final DateTime at;
+  final String type;
+  final Color color;
+  final String title;
+  final String detail;
+}
+
+class _DayMetric extends StatelessWidget {
+  const _DayMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .09),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$value',
+            style: TextStyle(
+              color: color,
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.muted, fontSize: 9.5),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ScheduleItem extends StatelessWidget {
   const _ScheduleItem({
     required this.time,
+    required this.type,
     required this.color,
     required this.title,
     required this.detail,
   });
   final String time;
+  final String type;
   final Color color;
   final String title;
   final String detail;
@@ -611,6 +916,16 @@ class _ScheduleItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
+              Text(
+                type.toUpperCase(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .5,
+                ),
+              ),
+              const SizedBox(height: 2),
               Text(
                 detail,
                 style: const TextStyle(color: AppColors.muted, fontSize: 10.5),
@@ -682,7 +997,7 @@ class _DriverLinkCard extends StatelessWidget {
   final bool highlighted;
 
   String get link =>
-      'https://go.transkontur.ru/${trip.id.substring(0, trip.id.length.clamp(1, 8))}';
+      'https://go.reys.dev/${trip.id.substring(0, trip.id.length.clamp(1, 8))}';
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1086,10 +1401,11 @@ class _IntegrationsScreenState extends State<IntegrationsScreen> {
   @override
   Widget build(BuildContext context) {
     const integrations = [
+      ('Госключ', 'КЭП / НЭП на телефоне и статус подписания'),
       ('Оператор ИС ЭПД', 'Передача XML в ГИС ЭПД'),
       ('1С', 'Клиенты, счета и закрывающие'),
       ('ATI.SU', 'Поиск машин и ставки'),
-      ('Saby / Контур', 'ЭДО и электронные подписи'),
+      ('ЭДО', 'Документы, подписи и статусы обмена'),
     ];
     return Scaffold(
       backgroundColor: AppColors.paper,

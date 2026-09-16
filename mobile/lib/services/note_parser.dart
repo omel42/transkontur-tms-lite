@@ -25,6 +25,20 @@ class NoteParser {
     'Волгоград',
     'Саратов',
     'Ижевск',
+    'Махачкала',
+    'Грозный',
+    'Ставрополь',
+    'Астрахань',
+    'Оренбург',
+    'Набережные Челны',
+    'Ульяновск',
+    'Барнаул',
+    'Тюмень',
+    'Сургут',
+    'Красноярск',
+    'Иркутск',
+    'Хабаровск',
+    'Владивосток',
   ];
 
   static const cityAliases = <String, List<String>>{
@@ -61,22 +75,41 @@ class NoteParser {
     'Волгоград': ['волгоград', 'волгограда', 'волгограде'],
     'Саратов': ['саратов', 'саратова', 'саратове'],
     'Ижевск': ['ижевск', 'ижевска', 'ижевске'],
+    'Махачкала': ['махачкала', 'махачкалы', 'махачкалу', 'махачкале'],
+    'Грозный': ['грозный', 'грозного', 'грозном'],
+    'Ставрополь': ['ставрополь', 'ставрополя', 'ставрополе'],
+    'Астрахань': ['астрахань', 'астрахани'],
+    'Оренбург': ['оренбург', 'оренбурга', 'оренбурге'],
+    'Набережные Челны': ['набережные челны', 'набережных челнов', 'челны'],
+    'Ульяновск': ['ульяновск', 'ульяновска', 'ульяновске'],
+    'Барнаул': ['барнаул', 'барнаула', 'барнауле'],
+    'Тюмень': ['тюмень', 'тюмени'],
+    'Сургут': ['сургут', 'сургута', 'сургуте'],
+    'Красноярск': ['красноярск', 'красноярска', 'красноярске'],
+    'Иркутск': ['иркутск', 'иркутска', 'иркутске'],
+    'Хабаровск': ['хабаровск', 'хабаровска', 'хабаровске'],
+    'Владивосток': ['владивосток', 'владивостока', 'владивостоке'],
   };
 
-  static const cargoWords = [
-    'оборудование',
-    'паллеты',
-    'кабель',
-    'продукты',
-    'мебель',
-    'металл',
-    'стройматериалы',
-    'запчасти',
-    'напитки',
-    'техника',
-    'одежда',
-    'бумага',
-  ];
+  static const cargoWords = <String, String>{
+    'оборудование': 'Оборудование',
+    'паллет': 'Паллеты',
+    'поддон': 'Паллеты',
+    'кабель': 'Кабель',
+    'продукт': 'Продукты',
+    'замороз': 'Замороженные продукты',
+    'мебель': 'Мебель',
+    'металл': 'Металл',
+    'стройматериал': 'Стройматериалы',
+    'запчаст': 'Запчасти',
+    'напит': 'Напитки',
+    'техник': 'Техника',
+    'одежд': 'Одежда',
+    'бумаг': 'Бумага',
+    'хими': 'Химическая продукция',
+    'пиломатериал': 'Пиломатериалы',
+    'мешк': 'Груз в мешках',
+  };
 
   static const vehicleWords = {
     'тент': 'Тент',
@@ -87,6 +120,29 @@ class NoteParser {
     'контейнер': 'Контейнеровоз',
     'газель': 'Газель',
     'фура': 'Тент',
+    'термос': 'Изотерм',
+    'открытая машина': 'Бортовой',
+    'низкорам': 'Трал',
+    'трал': 'Трал',
+  };
+
+  static const knownClients = {
+    'нордпром': 'НордПром',
+    'норд пром': 'НордПром',
+    'стройвектор': 'СтройВектор',
+    'строй вектор': 'СтройВектор',
+    'вкус севера': 'Вкус Севера',
+    'альфа кабель': 'Альфа Кабель',
+    'линия дома': 'Линия Дома',
+  };
+
+  static const knownCarriers = {
+    'ип ковалев': ('ИП Ковалёв', 'Андрей Ковалёв', '+7 916 440-18-02'),
+    'ип ковалёв': ('ИП Ковалёв', 'Андрей Ковалёв', '+7 916 440-18-02'),
+    'севертранс': ('ООО СеверТранс', 'Михаил Серов', '+7 921 084-05-51'),
+    'север транс': ('ООО СеверТранс', 'Михаил Серов', '+7 921 084-05-51'),
+    'ип руденко': ('ИП Руденко', 'Олег Руденко', '+7 915 118-30-70'),
+    'волга карго': ('ООО Волга Карго', 'Роман Юдин', '+7 927 440-12-09'),
   };
 
   TripDraft parse(String input, {DateTime? now}) {
@@ -104,6 +160,13 @@ class NoteParser {
       if (earliest >= 0) foundCities.add(MapEntry(earliest, city));
     }
     foundCities.sort((a, b) => a.key.compareTo(b.key));
+    var routeFrom = foundCities.isNotEmpty ? foundCities[0].value : '';
+    var routeTo = foundCities.length > 1 ? foundCities[1].value : '';
+    if (routeFrom.isEmpty || routeTo.isEmpty) {
+      final route = _routeFromText(text);
+      routeFrom = routeFrom.isEmpty ? route.$1 : routeFrom;
+      routeTo = routeTo.isEmpty ? route.$2 : routeTo;
+    }
 
     final weightMatch = RegExp(
       r'(\d+(?:[\.,]\d+)?)\s*(?:тонн|тонны|тонна|т)(?=\s|[,\.]|$)',
@@ -113,12 +176,13 @@ class NoteParser {
         0;
 
     String cargo = '';
-    for (final word in cargoWords) {
-      if (lower.contains(word)) {
-        cargo = word[0].toUpperCase() + word.substring(1);
+    for (final entry in cargoWords.entries) {
+      if (lower.contains(entry.key)) {
+        cargo = entry.value;
         break;
       }
     }
+    if (cargo.isEmpty) cargo = _genericCargo(text);
 
     String vehicle = '';
     for (final entry in vehicleWords.entries) {
@@ -132,6 +196,11 @@ class NoteParser {
       'ставка клиенту',
       'клиент дает',
       'клиент даёт',
+      'клиент платит',
+      'заказчик платит',
+      'заказчик дает',
+      'от заказчика',
+      'продажа',
       'от клиента',
       'клиент',
     ]);
@@ -140,6 +209,11 @@ class NoteParser {
       'водителю',
       'машина за',
       'на машину',
+      'закупка',
+      'перевозчик берет',
+      'перевозчик просит',
+      'берет',
+      'просит',
     ]);
 
     String date = '';
@@ -150,10 +224,19 @@ class NoteParser {
     } else if (lower.contains('сегодня')) {
       date = _formatDate(clock);
     } else {
+      date = _dateFromWords(lower, clock);
       final dateMatch = RegExp(
         r'\b(\d{1,2})[\./-](\d{1,2})(?:[\./-](\d{2,4}))?\b',
       ).firstMatch(lower);
-      if (dateMatch != null) {
+      final looksLikeWeight =
+          dateMatch != null &&
+          lower
+              .substring(
+                dateMatch.end,
+                (dateMatch.end + 10).clamp(0, lower.length),
+              )
+              .contains('тон');
+      if (date.isEmpty && dateMatch != null && !looksLikeWeight) {
         final year = dateMatch.group(3) ?? clock.year.toString();
         date =
             '${dateMatch.group(1)!.padLeft(2, '0')}.${dateMatch.group(2)!.padLeft(2, '0')}.${year.length == 2 ? '20$year' : year}';
@@ -168,79 +251,210 @@ class NoteParser {
             ? ''
             : '${timeMatch.group(1)!.padLeft(2, '0')}:${(timeMatch.group(2) ?? '00').padLeft(2, '0')}';
 
-    final phoneMatch = RegExp(
-      r'(?:\+7|8)[\s\-\(\)]*\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}',
-    ).firstMatch(text);
+    final phoneMatches =
+        RegExp(
+          r'(?:\+7|8)[\s\-\(\)]*\d{3}[\s\-\(\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}',
+        ).allMatches(text).toList();
     final plateMatch = RegExp(
-      r'\b[авекмнорстух]\s?\d{3}\s?[авекмнорстух]{2}\s?\d{2,3}\b',
+      r'[авекмнорстух]\s?\d{3}\s?[авекмнорстух]{2}\s?\d{2,3}',
       caseSensitive: false,
     ).firstMatch(text);
 
     String client = '';
-    const knownClients = [
-      'НордПром',
-      'СтройВектор',
-      'Вкус Севера',
-      'Альфа Кабель',
-      'Линия Дома',
-    ];
-    for (final candidate in knownClients) {
-      if (lower.contains(candidate.toLowerCase())) {
-        client = candidate;
+    for (final candidate in knownClients.entries) {
+      if (lower.contains(candidate.key)) {
+        client = candidate.value;
         break;
       }
     }
     if (client.isEmpty) {
-      final clientMatch = RegExp(
-        r'(?:клиент|заказчик)(?:\s+компания)?\s+[«"]?([а-яa-z0-9][а-яa-z0-9\- ]{1,24})',
+      client = _partyAfter(text, const ['клиент', 'заказчик']);
+    }
+    if (client.isEmpty) {
+      final leadingCompany = RegExp(
+        r'^\s*((?:ООО|ИП|АО|ПАО)\s+[«"]?[^,\.;]{2,40})[,\.;]',
         caseSensitive: false,
       ).firstMatch(text);
-      if (clientMatch != null) {
-        client = clientMatch.group(1)!.split(RegExp(r'[,\.;]')).first.trim();
+      client = _cleanPartyName(leadingCompany?.group(1) ?? '');
+    }
+
+    String carrier = '';
+    String driver = '';
+    String driverPhone = '';
+    for (final candidate in knownCarriers.entries) {
+      if (lower.contains(candidate.key)) {
+        carrier = candidate.value.$1;
+        driver = candidate.value.$2;
+        driverPhone = candidate.value.$3;
+        break;
+      }
+    }
+    if (carrier.isEmpty) {
+      carrier = _partyAfter(text, const ['перевозчик', 'машина от']);
+    }
+    final driverMatch = RegExp(
+      r'(?:водитель|за рулем|за рулём)\s+([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){0,2})',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (driverMatch != null) driver = driverMatch.group(1)!.trim();
+    if (phoneMatches.isNotEmpty) {
+      final driverWord = lower.indexOf('водител');
+      final lastPhone = phoneMatches.last;
+      if (driverWord >= 0 && lastPhone.start > driverWord) {
+        driverPhone = lastPhone.group(0)!;
       }
     }
 
+    final pickupAddress = _valueAfter(text, [
+      'адрес погрузки',
+      'забрать по адресу',
+      'погрузка по адресу',
+    ]);
+    final deliveryAddress = _valueAfter(text, [
+      'адрес выгрузки',
+      'доставить по адресу',
+      'выгрузка по адресу',
+    ]);
+
     return TripDraft(
-      from: foundCities.isNotEmpty ? foundCities[0].value : '',
-      to: foundCities.length > 1 ? foundCities[1].value : '',
+      from: routeFrom,
+      to: routeTo,
       cargo: cargo,
       weight: weight,
       vehicle: vehicle,
       pickupDate: date,
       pickupTime: time,
       client: client,
-      clientPhone: phoneMatch?.group(0) ?? '',
+      clientPhone: phoneMatches.isEmpty ? '' : phoneMatches.first.group(0)!,
       clientRate: clientRate,
+      carrier: carrier,
       carrierRate: carrierRate,
+      driver: driver,
+      driverPhone: driverPhone,
       truckPlate: plateMatch?.group(0)?.toUpperCase() ?? '',
+      pickupAddress: pickupAddress,
+      deliveryAddress: deliveryAddress,
       sourceText: text,
       comment: text,
       confidence: {
-        if (foundCities.isNotEmpty) 'from': .94,
-        if (foundCities.length > 1) 'to': .94,
+        if (routeFrom.isNotEmpty) 'from': .94,
+        if (routeTo.isNotEmpty) 'to': .94,
         if (cargo.isNotEmpty) 'cargo': .88,
         if (weight > 0) 'weight': .97,
         if (vehicle.isNotEmpty) 'vehicle': .92,
         if (date.isNotEmpty) 'pickupDate': .93,
         if (clientRate > 0) 'clientRate': .86,
+        if (carrierRate > 0) 'carrierRate': .86,
+        if (carrier.isNotEmpty) 'carrier': .9,
       },
     );
   }
+
+  static (String, String) _routeFromText(String text) {
+    final patterns = [
+      RegExp(
+        r'(?:рейс|маршрут)\s+([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)\s*[—–-]\s*([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)\s*[—–-]\s*([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'(?:из|от)\s+([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)\s+(?:в|до)\s+([А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*(?:\s+[А-ЯЁA-Z][А-ЯЁа-яёA-Za-z-]*)?)',
+        caseSensitive: false,
+      ),
+    ];
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(text);
+      if (match == null) continue;
+      final from = _canonicalCity(match.group(1) ?? '');
+      final to = _canonicalCity(match.group(2) ?? '');
+      if (from.isNotEmpty && to.isNotEmpty) return (from, to);
+    }
+    return ('', '');
+  }
+
+  static String _canonicalCity(String value) {
+    final cleaned = value
+        .trim()
+        .replaceFirst(RegExp(r'^(?:рейс|маршрут)\s+', caseSensitive: false), '')
+        .replaceAll(RegExp(r'[,\.;]+$'), '');
+    final normalized = cleaned.toLowerCase().replaceAll('ё', 'е');
+    for (final entry in cityAliases.entries) {
+      if (entry.value.any(
+        (alias) => alias.replaceAll('ё', 'е') == normalized,
+      )) {
+        return entry.key;
+      }
+    }
+    if (cleaned.isEmpty) return '';
+    return cleaned
+        .split(RegExp(r'\s+'))
+        .map(
+          (part) =>
+              part.isEmpty
+                  ? part
+                  : '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+  }
+
+  static String _genericCargo(String text) {
+    final match = RegExp(
+      r'(?:груз(?:ом)?|вез(?:е|ё)?м|перевозим)\s*[:—-]?\s*([а-яёa-z][а-яёa-z0-9\- ]{1,40}?)(?=\s+\d+(?:[\.,]\d+)?\s*(?:т|тонн)|\s+(?:вес|нужен|нужна|нужно|машина|тент|реф|клиент|заказчик|перевозчик)|[,\.;]|$)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final value = match?.group(1)?.trim() ?? '';
+    if (value.isEmpty) return '';
+    return '${value[0].toUpperCase()}${value.substring(1)}';
+  }
+
+  static String _partyAfter(String text, List<String> markers) {
+    for (final marker in markers) {
+      final match = RegExp(
+        '${RegExp.escape(marker)}(?:\\s+компания)?\\s+[«"]?([^,\\.;]{2,55})',
+        caseSensitive: false,
+      ).firstMatch(text);
+      if (match == null) continue;
+      final value =
+          match
+              .group(1)!
+              .split(
+                RegExp(
+                  r'\s+(?:платит|дает|даёт|берет|берёт|просит|ставка|за)(?=\s|\d|$)',
+                  caseSensitive: false,
+                ),
+              )
+              .first;
+      final cleaned = _cleanPartyName(value);
+      if (cleaned.isNotEmpty) return cleaned;
+    }
+    return '';
+  }
+
+  static String _cleanPartyName(String value) => value
+      .trim()
+      .replaceAll(RegExp(r'^[«"]+|[»"]+$'), '')
+      .replaceAll(RegExp(r'\s+'), ' ');
 
   static int _moneyAfter(String text, List<String> markers) {
     for (final marker in markers) {
       final escaped = RegExp.escape(marker.replaceAll('ё', 'е'));
       final match = RegExp(
-        '$escaped[^0-9]{0,18}(\\d[\\d\\s]{2,8})(?:\\s*(?:₽|р|руб|тысяч|тыс))?',
+        '$escaped[^0-9]{0,24}(\\d+(?:[\\.,]\\d+)?(?:\\s+\\d{3})?)\\s*(млн|миллион(?:а|ов)?|тысяч(?:а|и)?|тыс\\.?|к|₽|руб(?:лей|ля)?|р\\.?)?',
       ).firstMatch(text);
       if (match != null) {
-        var value = int.tryParse(match.group(1)!.replaceAll(' ', '')) ?? 0;
-        final tail = text.substring(
-          match.end > text.length ? text.length : match.end - 8,
-          match.end,
-        );
-        if ((tail.contains('тыс')) && value < 1000) value *= 1000;
-        return value;
+        final raw = match.group(1)!.replaceAll(' ', '').replaceAll(',', '.');
+        final number = double.tryParse(raw) ?? 0;
+        final unit = match.group(2) ?? '';
+        final multiplier =
+            unit.startsWith('млн') || unit.startsWith('миллион')
+                ? 1000000
+                : unit.startsWith('тыс') || unit == 'к'
+                ? 1000
+                : 1;
+        return (number * multiplier).round();
       }
     }
     return 0;
@@ -249,6 +463,8 @@ class NoteParser {
   static String _normalizeNumbers(String value) {
     var result = value;
     const replacements = <String, String>{
+      'полторы': '1.5',
+      'полтора': '1.5',
       'двести пятьдесят': '250',
       'двести сорок': '240',
       'двести тридцать': '230',
@@ -311,6 +527,58 @@ class NoteParser {
       );
     }
     return result;
+  }
+
+  static String _valueAfter(String text, List<String> markers) {
+    for (final marker in markers) {
+      final match = RegExp(
+        '${RegExp.escape(marker)}\\s*[:—-]?\\s*([^;\\n]{4,70})',
+        caseSensitive: false,
+      ).firstMatch(text);
+      if (match != null) {
+        return match
+            .group(1)!
+            .split(
+              RegExp(r'\s+(?:адрес|ставка|клиент|вес)\b', caseSensitive: false),
+            )
+            .first
+            .trim()
+            .replaceAll(RegExp(r'[,\.]$'), '');
+      }
+    }
+    return '';
+  }
+
+  static String _dateFromWords(String text, DateTime clock) {
+    const months = {
+      'января': 1,
+      'февраля': 2,
+      'марта': 3,
+      'апреля': 4,
+      'мая': 5,
+      'июня': 6,
+      'июля': 7,
+      'августа': 8,
+      'сентября': 9,
+      'октября': 10,
+      'ноября': 11,
+      'декабря': 12,
+    };
+    for (final month in months.entries) {
+      final match = RegExp('(\\d{1,2})\\s+${month.key}').firstMatch(text);
+      if (match == null) continue;
+      final day = int.parse(match.group(1)!);
+      var year = clock.year;
+      if (DateTime(
+        year,
+        month.value,
+        day,
+      ).isBefore(DateTime(clock.year, clock.month, clock.day))) {
+        year++;
+      }
+      return _formatDate(DateTime(year, month.value, day));
+    }
+    return '';
   }
 
   static String _formatDate(DateTime value) =>

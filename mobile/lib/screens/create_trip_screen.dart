@@ -13,6 +13,7 @@ import '../data/app_store.dart';
 import '../domain/models.dart';
 import '../services/local_asr.dart';
 import '../services/note_parser.dart';
+import '../services/speech_transcript.dart';
 import '../theme.dart';
 import 'documents_screen.dart';
 
@@ -32,6 +33,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   final asr = createLocalAsrEngine();
   final recorder = AudioRecorder();
   final speech = SpeechToText();
+  final speechTranscript = SpeechTranscript();
   final note = TextEditingController();
   final fields = <String, TextEditingController>{};
   Timer? timer;
@@ -42,6 +44,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   bool processing = false;
   bool usingSystemSpeech = false;
   bool finishQueued = false;
+  bool userStoppingSpeech = false;
+  bool restartQueued = false;
+  String? speechLocaleId;
   Trip? created;
 
   @override
@@ -133,6 +138,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   Future<void> _toggleRecording() async {
     if (recording) {
       if (usingSystemSpeech) {
+        userStoppingSpeech = true;
+        speechTranscript.commitPartial();
+        note.text = speechTranscript.text;
         await speech.stop();
         await _finishSystemSpeech();
         return;
@@ -148,7 +156,20 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       try {
         final state = await asr.readiness();
         if (state.ready && path != null) {
-          transcript = await asr.transcribe(path);
+          const testWavPath = String.fromEnvironment('QWEN_TEST_WAV');
+          transcript = await asr.transcribe(
+            testWavPath.isEmpty ? path : testWavPath,
+          );
+          final normalized = transcript.trim().toLowerCase();
+          const nonSpeechResults = {
+            'language',
+            'russian',
+            'русский',
+            '<|endoftext|>',
+          };
+          if (normalized.length < 3 || nonSpeechResults.contains(normalized)) {
+            transcript = '';
+          }
         }
       } catch (_) {}
       if (transcript.isEmpty) {
@@ -185,7 +206,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     var path = '';
     if (!kIsWeb) {
       final dir = await getTemporaryDirectory();
-      path = '${dir.path}/transkontur_note.wav';
+      path = '${dir.path}/reys_note.wav';
     }
     await recorder.start(
       const RecordConfig(
@@ -206,18 +227,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   Future<void> _startSystemSpeech() async {
     finishQueued = false;
+    userStoppingSpeech = false;
+    restartQueued = false;
     final available = await speech.initialize(
-      onStatus: (status) {
-        if ((status == SpeechToText.doneStatus ||
-                status == SpeechToText.notListeningStatus) &&
-            recording &&
-            usingSystemSpeech) {
-          Future<void>.delayed(
-            const Duration(milliseconds: 350),
-            _finishSystemSpeech,
-          );
-        }
-      },
+      onStatus: _onSpeechStatus,
       onError: _onSpeechError,
     );
     if (!available) {
@@ -235,8 +248,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     final russian = locales.where(
       (locale) => locale.localeId.toLowerCase().startsWith('ru'),
     );
-    final localeId = russian.isEmpty ? null : russian.first.localeId;
+    speechLocaleId = russian.isEmpty ? null : russian.first.localeId;
     note.clear();
+    speechTranscript.reset();
     if (!mounted) return;
     setState(() {
       usingSystemSpeech = true;
@@ -247,31 +261,76 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && recording) setState(() => seconds++);
     });
+    await _listenSystemSegment();
+  }
+
+  Future<void> _listenSystemSegment() async {
+    if (!recording || !usingSystemSpeech || userStoppingSpeech) return;
     await speech.listen(
       onResult: _onSpeechResult,
       listenOptions: SpeechListenOptions(
-        localeId: localeId,
+        localeId: speechLocaleId,
         partialResults: true,
-        cancelOnError: true,
+        cancelOnError: false,
         listenMode: ListenMode.dictation,
-        listenFor: const Duration(minutes: 2),
-        pauseFor: const Duration(seconds: 4),
+        listenFor: const Duration(minutes: 5),
+        pauseFor: const Duration(seconds: 12),
       ),
     );
   }
 
+  void _onSpeechStatus(String status) {
+    final ended =
+        status == SpeechToText.doneStatus ||
+        status == SpeechToText.notListeningStatus;
+    if (!ended || !recording || !usingSystemSpeech || userStoppingSpeech) {
+      return;
+    }
+    speechTranscript.commitPartial();
+    if (mounted) setState(() => note.text = speechTranscript.text);
+    _queueSpeechRestart();
+  }
+
+  void _queueSpeechRestart() {
+    if (restartQueued || userStoppingSpeech) return;
+    restartQueued = true;
+    Future<void>.delayed(const Duration(milliseconds: 320), () async {
+      restartQueued = false;
+      if (!mounted || !recording || !usingSystemSpeech || userStoppingSpeech) {
+        return;
+      }
+      try {
+        await _listenSystemSegment();
+      } catch (_) {
+        if (mounted && recording && !userStoppingSpeech) _queueSpeechRestart();
+      }
+    });
+  }
+
   void _onSpeechResult(SpeechRecognitionResult result) {
     if (!mounted) return;
-    setState(() => note.text = result.recognizedWords.trim());
     if (result.finalResult) {
-      Future<void>.delayed(
-        const Duration(milliseconds: 250),
-        _finishSystemSpeech,
-      );
+      speechTranscript.commit(result.recognizedWords);
+    } else {
+      speechTranscript.updatePartial(result.recognizedWords);
     }
+    setState(() => note.text = speechTranscript.text);
   }
 
   void _onSpeechError(SpeechRecognitionError error) {
+    if (userStoppingSpeech || !recording || !usingSystemSpeech) return;
+    const recoverable = {
+      'error_no_match',
+      'error_speech_timeout',
+      'error_busy',
+      'error_client',
+    };
+    if (recoverable.contains(error.errorMsg)) {
+      speechTranscript.commitPartial();
+      if (mounted) setState(() => note.text = speechTranscript.text);
+      _queueSpeechRestart();
+      return;
+    }
     timer?.cancel();
     if (!mounted) return;
     setState(() {
@@ -293,8 +352,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   Future<void> _finishSystemSpeech() async {
     if (finishQueued || !usingSystemSpeech) return;
     finishQueued = true;
+    userStoppingSpeech = true;
     timer?.cancel();
     if (speech.isListening) await speech.stop();
+    speechTranscript.commitPartial();
+    note.text = speechTranscript.text;
     if (!mounted) return;
     setState(() {
       recording = false;
@@ -502,7 +564,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 : processing
                 ? Icons.more_horiz_rounded
                 : Icons.mic_rounded,
-            color: AppColors.ink,
+            color: Colors.white,
             size: 54,
           ),
         ),
@@ -523,7 +585,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       const SizedBox(height: 7),
       Text(
         recording
-            ? 'Нажмите ещё раз, когда закончите'
+            ? 'Можно делать паузы. Нажмите ещё раз, когда закончите'
             : 'Например: Москва — Казань, завтра, 20 тонн…',
         textAlign: TextAlign.center,
         style: const TextStyle(color: Color(0xFF8F9EA7), fontSize: 12),
@@ -606,7 +668,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         onPressed: _analyze,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.acid,
-          foregroundColor: AppColors.ink,
+          foregroundColor: Colors.white,
         ),
         icon: const Icon(Icons.auto_awesome_rounded),
         label: const Text('Разобрать и заполнить'),
@@ -632,7 +694,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
           ),
           child: const Icon(
             Icons.edit_note_rounded,
-            color: AppColors.ink,
+            color: Colors.white,
             size: 29,
           ),
         ),
@@ -1151,7 +1213,7 @@ class _RecognizedNote extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.auto_awesome_rounded,
-                color: AppColors.ink,
+                color: Colors.white,
                 size: 19,
               ),
             ),

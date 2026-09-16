@@ -15,28 +15,64 @@ class BrandMark extends StatelessWidget {
       color: AppColors.acid,
       borderRadius: BorderRadius.circular(size * .3),
     ),
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Icon(
-          Icons.compare_arrows_rounded,
-          color: AppColors.ink,
-          size: size * .7,
-        ),
-        Positioned(
-          bottom: size * .16,
-          child: Container(
-            width: size * .45,
-            height: size * .09,
-            decoration: BoxDecoration(
-              color: AppColors.cyan,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-      ],
+    child: Padding(
+      padding: EdgeInsets.all(size * .14),
+      child: const CustomPaint(painter: _ReysMarkPainter()),
     ),
   );
+}
+
+class _ReysMarkPainter extends CustomPainter {
+  const _ReysMarkPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final route =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = size.width * .13
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round;
+    final path =
+        Path()
+          ..moveTo(size.width * .18, size.height * .77)
+          ..cubicTo(
+            size.width * .43,
+            size.height * .77,
+            size.width * .55,
+            size.height * .61,
+            size.width * .48,
+            size.height * .47,
+          )
+          ..cubicTo(
+            size.width * .41,
+            size.height * .31,
+            size.width * .55,
+            size.height * .22,
+            size.width * .78,
+            size.height * .22,
+          );
+    canvas.drawPath(path, route);
+    canvas.drawLine(
+      Offset(size.width * .64, size.height * .1),
+      Offset(size.width * .8, size.height * .22),
+      route,
+    );
+    canvas.drawLine(
+      Offset(size.width * .64, size.height * .34),
+      Offset(size.width * .8, size.height * .22),
+      route,
+    );
+    canvas.drawCircle(
+      Offset(size.width * .18, size.height * .77),
+      size.width * .105,
+      Paint()..color = AppColors.cyan,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class PageHeader extends StatelessWidget {

@@ -9,6 +9,7 @@ enum TransportDocumentKind {
   transportOrder,
   forwardingOrder,
   forwardingReceipt,
+  warehouseReceipt,
   transportBill,
   serviceAct,
   universalTransfer,
@@ -19,6 +20,7 @@ extension TransportDocumentKindX on TransportDocumentKind {
     TransportDocumentKind.transportOrder => 'Заказ-заявка на перевозку',
     TransportDocumentKind.forwardingOrder => 'Поручение экспедитору',
     TransportDocumentKind.forwardingReceipt => 'Экспедиторская расписка',
+    TransportDocumentKind.warehouseReceipt => 'Складская расписка',
     TransportDocumentKind.transportBill => 'Электронная транспортная накладная',
     TransportDocumentKind.serviceAct => 'Акт оказанных услуг',
     TransportDocumentKind.universalTransfer => 'УПД / закрывающий документ',
@@ -28,16 +30,20 @@ extension TransportDocumentKindX on TransportDocumentKind {
     TransportDocumentKind.transportOrder => 'Заказ-заявка',
     TransportDocumentKind.forwardingOrder => 'Поручение экспедитору',
     TransportDocumentKind.forwardingReceipt => 'Экспедиторская расписка',
+    TransportDocumentKind.warehouseReceipt => 'Складская расписка',
     TransportDocumentKind.transportBill => 'ЭТрН',
     TransportDocumentKind.serviceAct => 'Акт',
     TransportDocumentKind.universalTransfer => 'УПД',
   };
 
   String get format => switch (this) {
-    TransportDocumentKind.transportOrder ||
-    TransportDocumentKind.forwardingOrder ||
-    TransportDocumentKind.forwardingReceipt ||
-    TransportDocumentKind.transportBill => 'PDF + XML ГИС ЭПД',
+    TransportDocumentKind.transportOrder => 'XML · приказ ФНС № 108@',
+    TransportDocumentKind.forwardingOrder => 'XML 5.01 · ЕД-1-26/277@, прил. 1',
+    TransportDocumentKind.forwardingReceipt =>
+      'XML 5.01 · ЕД-1-26/277@, прил. 2',
+    TransportDocumentKind.warehouseReceipt =>
+      'XML 5.01 · ЕД-1-26/277@, прил. 3',
+    TransportDocumentKind.transportBill => 'XML ГИС ЭПД · ЕД-7-26/1065@',
     TransportDocumentKind.serviceAct => 'PDF для печати',
     TransportDocumentKind.universalTransfer => 'PDF + XML ФНС',
   };
@@ -49,6 +55,8 @@ extension TransportDocumentKindX on TransportDocumentKind {
       'Задание клиента экспедитору: что организовать и на каких условиях.',
     TransportDocumentKind.forwardingReceipt =>
       'Подтверждает, что экспедитор принял груз или документы в работу.',
+    TransportDocumentKind.warehouseReceipt =>
+      'Подтверждает принятие груза экспедитором на складское хранение.',
     TransportDocumentKind.transportBill =>
       'Основной перевозочный документ для отправителя, перевозчика и получателя.',
     TransportDocumentKind.serviceAct =>
@@ -58,10 +66,11 @@ extension TransportDocumentKindX on TransportDocumentKind {
   };
 
   String get xmlRoot => switch (this) {
-    TransportDocumentKind.transportOrder => 'TransportOrder',
-    TransportDocumentKind.forwardingOrder => 'ForwardingOrder',
-    TransportDocumentKind.forwardingReceipt => 'ForwardingReceipt',
-    TransportDocumentKind.transportBill => 'ElectronicTransportBill',
+    TransportDocumentKind.transportOrder => 'ON_ZAKAZ',
+    TransportDocumentKind.forwardingOrder => 'ON_POREXPEXP',
+    TransportDocumentKind.forwardingReceipt => 'ON_EXPRASP',
+    TransportDocumentKind.warehouseReceipt => 'ON_SKLADRASP',
+    TransportDocumentKind.transportBill => 'ON_TTN',
     TransportDocumentKind.serviceAct => 'ServiceAcceptanceAct',
     TransportDocumentKind.universalTransfer => 'UniversalTransferDocument',
   };
@@ -70,6 +79,7 @@ extension TransportDocumentKindX on TransportDocumentKind {
     TransportDocumentKind.transportOrder ||
     TransportDocumentKind.forwardingOrder ||
     TransportDocumentKind.forwardingReceipt ||
+    TransportDocumentKind.warehouseReceipt ||
     TransportDocumentKind.transportBill => true,
     _ => false,
   };
@@ -83,7 +93,7 @@ class DocumentReadiness {
 }
 
 class DocumentFactory {
-  static const companyName = 'ООО «ТрансКонтур»';
+  static const companyName = 'ООО «Рейс»';
   static const companyInn = 'ИНН 7700000000';
 
   static DocumentReadiness readiness(Trip trip, TransportDocumentKind kind) {
@@ -115,35 +125,34 @@ class DocumentFactory {
     final ready = readiness(trip, kind);
     final date = _date(trip.pickupAt);
     return const XmlEncoder.withIndent('  ').convert({
-      kind.xmlRoot: {
-        'Version': 'demo-1.0',
-        'Status': ready.ready ? 'READY_FOR_SIGNING' : 'DRAFT',
-        'DocumentNumber': '${trip.number}-${kind.name}',
-        'DocumentDate': date,
-        'Expeditor': {'Name': companyName, 'Inn': companyInn},
-        'Client': {'Name': trip.client, 'RateRub': trip.clientRate},
-        'Route': {
-          'LoadingPoint': trip.from,
-          'UnloadingPoint': trip.to,
-          'LoadingDateTime': trip.pickupAt.toIso8601String(),
-        },
-        'Cargo': {
-          'Name': trip.cargo,
-          'WeightTonnes': trip.weight,
-          'VehicleType': trip.vehicle,
-        },
-        'Carrier': {
-          'Name': trip.carrier,
-          'Driver': trip.driver,
-          'DriverPhone': trip.driverPhone,
-          'VehiclePlate': trip.truckPlate,
-          'RateRub': trip.carrierRate,
-        },
-        'Economics': {'MarginRub': trip.margin},
-        'Exchange': {
-          'HumanReadable': 'PDF',
-          'MachineReadable': kind.isEpd ? 'XML_IS_EPD' : 'XML',
-          'Transmission': kind.isEpd ? 'Через оператора ИС ЭПД' : 'ЭДО',
+      'Файл': {
+        'ИдФайл': '${kind.xmlRoot}_${trip.number}_${trip.id}',
+        'ВерсФорм': kind.isEpd ? '5.01' : '1.0',
+        'ФорматОбмена': kind.xmlRoot,
+        'Статус': ready.ready ? 'ГОТОВ_К_ПОДПИСАНИЮ' : 'ЧЕРНОВИК',
+        'Документ': {
+          'НомерДок': '${trip.number}-${kind.name}',
+          'ДатаДок': date,
+          'СодОпер': kind.title,
+          'СвЭксп': {'НаимОрг': companyName, 'ИНН': companyInn},
+          'СвКлнт': {'НаимОрг': trip.client, 'СумУслуг': trip.clientRate},
+          'СвГруз': {
+            'НаимГруз': trip.cargo,
+            'ВесГруз': trip.weight,
+            'Маршрут': '${trip.from} — ${trip.to}',
+            'ДатаПогруз': trip.pickupAt.toIso8601String(),
+          },
+          'СвТрсГруз': {
+            'Перевозчик': trip.carrier,
+            'Водитель': trip.driver,
+            'Телефон': trip.driverPhone,
+            'ГосНомер': trip.truckPlate,
+            'ТипТС': trip.vehicle,
+          },
+          'Обмен': {
+            'Машиночитаемый': kind.isEpd ? 'XML_IS_EPD' : 'XML_EDO',
+            'Канал': kind.isEpd ? 'Оператор ИС ЭПД → ГИС ЭПД' : 'Оператор ЭДО',
+          },
         },
       },
     });
@@ -183,7 +192,7 @@ class DocumentFactory {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'ТРАНСКОНТУР',
+                    'РЕЙС',
                     style: pw.TextStyle(
                       font: bold,
                       fontSize: 11,
@@ -232,34 +241,7 @@ class DocumentFactory {
                 ),
               ),
               pw.SizedBox(height: 22),
-              _pdfSection(bold, 'Стороны', [
-                ['Экспедитор', companyName],
-                ['Реквизиты', companyInn],
-                ['Клиент / заказчик', trip.client],
-                [
-                  'Перевозчик',
-                  trip.carrier.isEmpty ? 'Не назначен' : trip.carrier,
-                ],
-                ['Водитель', trip.driver.isEmpty ? 'Не назначен' : trip.driver],
-                [
-                  'Телефон водителя',
-                  trip.driverPhone.isEmpty ? '—' : trip.driverPhone,
-                ],
-              ]),
-              _pdfSection(bold, 'Перевозка', [
-                ['Маршрут', '${trip.from} — ${trip.to}'],
-                ['Дата погрузки', _dateTime(trip.pickupAt)],
-                ['Груз', trip.cargo],
-                ['Вес', '${_weight(trip.weight)} т'],
-                ['Тип машины', trip.vehicle],
-                ['Госномер', trip.truckPlate.isEmpty ? '—' : trip.truckPlate],
-              ]),
-              _pdfSection(bold, 'Условия и расчёты', [
-                ['Ставка клиента', '${_money(trip.clientRate)} ₽'],
-                ['Ставка перевозчика', '${_money(trip.carrierRate)} ₽'],
-                ['Маржа экспедитора', '${_money(trip.margin)} ₽'],
-                ['Текущий статус', trip.status.label],
-              ]),
+              ..._pdfContent(bold, trip, kind),
               pw.SizedBox(height: 18),
               pw.Container(
                 padding: const pw.EdgeInsets.all(13),
@@ -331,6 +313,150 @@ class DocumentFactory {
       ],
     ),
   );
+
+  static List<pw.Widget> _pdfContent(
+    pw.Font bold,
+    Trip trip,
+    TransportDocumentKind kind,
+  ) => switch (kind) {
+    TransportDocumentKind.transportOrder => [
+      _pdfSection(bold, '1. Заявка и стороны', [
+        ['Заказчик', trip.client],
+        ['Экспедитор', companyName],
+        ['Номер заявки', '${trip.number}-ЗЗ'],
+        ['Дата', _date(trip.pickupAt)],
+      ]),
+      _pdfSection(bold, '2. Условия перевозки', [
+        ['Маршрут', '${trip.from} — ${trip.to}'],
+        ['Подача машины', _dateTime(trip.pickupAt)],
+        ['Груз / вес', '${trip.cargo}, ${_weight(trip.weight)} т'],
+        ['Требуемое ТС', trip.vehicle],
+        ['Ставка', '${_money(trip.clientRate)} ₽'],
+      ]),
+      _pdfSection(bold, '3. Назначенное исполнение', [
+        ['Перевозчик', _orDash(trip.carrier)],
+        ['Водитель', _orDash(trip.driver)],
+        ['Телефон', _orDash(trip.driverPhone)],
+        ['Госномер', _orDash(trip.truckPlate)],
+      ]),
+    ],
+    TransportDocumentKind.forwardingOrder => [
+      _pdfSection(bold, '1. Поручение клиента', [
+        ['Клиент', trip.client],
+        ['Экспедитор', companyName],
+        ['Поручение №', '${trip.number}-ПЭ'],
+        ['Услуга', 'Организовать автомобильную перевозку груза'],
+      ]),
+      _pdfSection(bold, '2. Сведения о грузе', [
+        ['Наименование', trip.cargo],
+        ['Масса брутто', '${_weight(trip.weight)} т'],
+        ['Пункт отправления', trip.from],
+        ['Пункт назначения', trip.to],
+        ['Дата готовности', _dateTime(trip.pickupAt)],
+      ]),
+      _pdfSection(bold, '3. Экспедиционные услуги', [
+        ['Организация перевозки', 'Да'],
+        ['Подбор перевозчика', 'Да'],
+        ['Контроль документов', 'Да'],
+        ['Вознаграждение / стоимость', '${_money(trip.clientRate)} ₽'],
+      ]),
+    ],
+    TransportDocumentKind.forwardingReceipt => [
+      _pdfSection(bold, '1. Приём груза экспедитором', [
+        ['Расписка №', '${trip.number}-ЭР'],
+        ['Дата приёма', _dateTime(trip.pickupAt)],
+        ['Клиент', trip.client],
+        ['Экспедитор', companyName],
+      ]),
+      _pdfSection(bold, '2. Принятый груз', [
+        ['Наименование', trip.cargo],
+        ['Масса', '${_weight(trip.weight)} т'],
+        ['Место приёма', trip.from],
+        ['Назначение', trip.to],
+        [
+          'Состояние / оговорки',
+          'Без видимых повреждений · уточнить при приёмке',
+        ],
+      ]),
+      _pdfSection(bold, '3. Доставка', [
+        ['Перевозчик', _orDash(trip.carrier)],
+        ['Водитель', _orDash(trip.driver)],
+        ['ТС / госномер', '${trip.vehicle} · ${_orDash(trip.truckPlate)}'],
+      ]),
+    ],
+    TransportDocumentKind.warehouseReceipt => [
+      _pdfSection(bold, '1. Приём на хранение', [
+        ['Складская расписка №', '${trip.number}-СР'],
+        ['Клиент', trip.client],
+        ['Экспедитор', companyName],
+        ['Дата и время приёма', _dateTime(trip.pickupAt)],
+        ['Склад', '${trip.from} · адрес требуется уточнить'],
+      ]),
+      _pdfSection(bold, '2. Груз на складе', [
+        ['Наименование', trip.cargo],
+        ['Масса партии', '${_weight(trip.weight)} т'],
+        ['Упаковка', 'Требуется подтвердить при приёмке'],
+        ['Состояние', 'Требуется подтвердить при приёмке'],
+        ['Условия хранения', 'По договору транспортной экспедиции'],
+      ]),
+    ],
+    TransportDocumentKind.transportBill => [
+      _pdfSection(bold, 'Разделы 1–2. Участники', [
+        ['Грузоотправитель', trip.client],
+        ['Грузополучатель', 'Получатель в г. ${trip.to} · уточнить реквизиты'],
+        ['Перевозчик', _orDash(trip.carrier)],
+        ['Экспедитор', companyName],
+      ]),
+      _pdfSection(bold, 'Разделы 3–6. Груз и маршрут', [
+        ['Груз', trip.cargo],
+        ['Масса брутто', '${_weight(trip.weight)} т'],
+        ['Погрузка', '${trip.from} · ${_dateTime(trip.pickupAt)}'],
+        ['Выгрузка', trip.to],
+        ['Сопроводительные документы', 'Заказ-заявка, поручение экспедитору'],
+      ]),
+      _pdfSection(bold, 'Разделы 7–11. Перевозка', [
+        ['Водитель', _orDash(trip.driver)],
+        ['Телефон', _orDash(trip.driverPhone)],
+        ['Транспортное средство', trip.vehicle],
+        ['Госномер', _orDash(trip.truckPlate)],
+        ['Стоимость перевозки', '${_money(trip.carrierRate)} ₽'],
+      ]),
+    ],
+    TransportDocumentKind.serviceAct => [
+      _pdfSection(bold, 'Акт об оказании услуг', [
+        ['Исполнитель', companyName],
+        ['Заказчик', trip.client],
+        ['Основание', 'Договор транспортной экспедиции / ${trip.number}'],
+        ['Период', _date(trip.pickupAt)],
+      ]),
+      _pdfSection(bold, 'Оказанные услуги', [
+        ['Наименование', 'Организация перевозки ${trip.from} — ${trip.to}'],
+        ['Количество', '1 услуга'],
+        ['Стоимость без НДС', '${_money(trip.clientRate)} ₽'],
+        ['Итого', '${_money(trip.clientRate)} ₽'],
+        ['Претензии', 'Сторонами не заявлены'],
+      ]),
+    ],
+    TransportDocumentKind.universalTransfer => [
+      _pdfSection(bold, 'Универсальный передаточный документ', [
+        ['Статус', '2 — передаточный документ (акт)'],
+        ['Продавец / исполнитель', companyName],
+        ['ИНН / КПП', companyInn],
+        ['Покупатель / заказчик', trip.client],
+        ['Основание передачи', 'Транспортно-экспедиционные услуги'],
+      ]),
+      _pdfSection(bold, 'Табличная часть УПД', [
+        ['Наименование услуги', 'Организация перевозки ${trip.route}'],
+        ['Единица', 'услуга'],
+        ['Количество', '1'],
+        ['Цена / стоимость', '${_money(trip.clientRate)} ₽'],
+        ['НДС', 'Без НДС · настройка организации'],
+        ['Всего к оплате', '${_money(trip.clientRate)} ₽'],
+      ]),
+    ],
+  };
+
+  static String _orDash(String value) => value.trim().isEmpty ? '—' : value;
 
   static pw.Widget _signature(pw.Font bold, String title) => pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,

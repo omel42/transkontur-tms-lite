@@ -30,10 +30,26 @@ void main() {
       TransportDocumentKind.transportBill,
     );
 
-    expect(xml, contains('<ElectronicTransportBill>'));
-    expect(xml, contains('<LoadingPoint>Москва</LoadingPoint>'));
-    expect(xml, contains('<MachineReadable>XML_IS_EPD</MachineReadable>'));
-    expect(xml, contains('<Status>READY_FOR_SIGNING</Status>'));
+    expect(xml, contains('<Файл>'));
+    expect(xml, contains('<ФорматОбмена>ON_TTN</ФорматОбмена>'));
+    expect(xml, contains('<Маршрут>Москва — Казань</Маршрут>'));
+    expect(xml, contains('<Машиночитаемый>XML_IS_EPD</Машиночитаемый>'));
+    expect(xml, contains('<Статус>ГОТОВ_К_ПОДПИСАНИЮ</Статус>'));
+  });
+
+  test('в комплекте есть все три экспедиторских документа ФНС', () {
+    expect(
+      TransportDocumentKind.forwardingOrder.format,
+      contains('ЕД-1-26/277@, прил. 1'),
+    );
+    expect(
+      TransportDocumentKind.forwardingReceipt.format,
+      contains('ЕД-1-26/277@, прил. 2'),
+    );
+    expect(
+      TransportDocumentKind.warehouseReceipt.format,
+      contains('ЕД-1-26/277@, прил. 3'),
+    );
   });
 
   test('создаёт непустой PDF с кириллическим шрифтом', () async {

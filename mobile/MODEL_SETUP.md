@@ -4,12 +4,11 @@
 
 Модель: https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25.tar.bz2
 
-В каталоге приложения `ApplicationSupport/models/qwen3_asr` должны находиться:
+В каталоге приложения `models/qwen3_asr` должны находиться:
 
 - `conv_frontend.onnx`
 - `encoder.int8.onnx`
 - `decoder.int8.onnx`
-- `tokens.txt`
 - каталог `tokenizer/`
 
 Большие веса намеренно не включаются в APK и веб-сборку: архив модели занимает около 879 МБ. Пока файлы Qwen не установлены, приложение использует настоящее системное распознавание речи Android или браузера. Оно сразу передаёт распознанный русский текст в локальный разборщик заявки, но конкретная системная служба может использовать сеть.

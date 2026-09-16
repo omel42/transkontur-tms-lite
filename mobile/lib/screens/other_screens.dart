@@ -191,10 +191,28 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   bool clients = true;
+  final search = TextEditingController();
+
+  @override
+  void dispose() {
+    search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final data = clients ? widget.store.clients : widget.store.carriers;
+    final source = clients ? widget.store.clients : widget.store.carriers;
+    final query = search.text.trim().toLowerCase();
+    final data =
+        source.where((item) {
+          if (query.isEmpty) return true;
+          return [
+            item.name,
+            item.contact,
+            item.phone,
+            ...item.usualRoutes,
+          ].any((value) => value.toLowerCase().contains(query));
+        }).toList();
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 118),
@@ -203,7 +221,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             eyebrow: 'ВАШИ СВЯЗИ',
             title: 'База',
             icon: Icons.person_add_alt_1_rounded,
-            onIconTap: () => _showAddContact(context),
+            onIconTap: () => _editContact(context),
           ),
           const SizedBox(height: 18),
           Container(
@@ -239,8 +257,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.line),
             ),
-            child: const TextField(
-              decoration: InputDecoration(
+            child: TextField(
+              controller: search,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
                 icon: Icon(Icons.search_rounded, color: AppColors.muted),
                 hintText: 'Компания, человек или маршрут',
                 filled: false,
@@ -265,26 +285,59 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
   }
 
-  void _showAddContact(BuildContext context) {
-    showDialog<void>(
+  Future<void> _editContact(BuildContext context, {Counterparty? item}) async {
+    final name = TextEditingController(text: item?.name ?? '');
+    final contact = TextEditingController(text: item?.contact ?? '');
+    final phone = TextEditingController(text: item?.phone ?? '');
+    final route = TextEditingController(
+      text: item?.usualRoutes.join(', ') ?? '',
+    );
+    final tags = TextEditingController(text: item?.tags.join(', ') ?? '');
+    final kind = item?.kind ?? (clients ? 'client' : 'carrier');
+    await showDialog<void>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Новый контакт'),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(decoration: InputDecoration(labelText: 'Компания')),
-                SizedBox(height: 9),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Контактное лицо'),
-                ),
-                SizedBox(height: 9),
-                TextField(
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(labelText: 'Телефон'),
-                ),
-              ],
+            title: Text(item == null ? 'Новый контакт' : 'Изменить контакт'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(labelText: 'Компания'),
+                  ),
+                  const SizedBox(height: 9),
+                  TextField(
+                    controller: contact,
+                    decoration: const InputDecoration(
+                      labelText: 'Контактное лицо',
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  TextField(
+                    controller: phone,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(labelText: 'Телефон'),
+                  ),
+                  const SizedBox(height: 9),
+                  TextField(
+                    controller: route,
+                    decoration: const InputDecoration(
+                      labelText: 'Обычный маршрут',
+                      hintText: 'Москва → Казань',
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  TextField(
+                    controller: tags,
+                    decoration: const InputDecoration(
+                      labelText: 'Машина / метки',
+                      hintText: 'Тент 20 т, ЭДО',
+                    ),
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -293,18 +346,57 @@ class _ContactsScreenState extends State<ContactsScreen> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Контакт сохранён в демо-базе'),
-                    ),
+                  if (name.text.trim().isEmpty ||
+                      contact.text.trim().isEmpty ||
+                      phone.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Заполните компанию, контакт и телефон'),
+                      ),
+                    );
+                    return;
+                  }
+                  final value = Counterparty(
+                    id:
+                        item?.id ??
+                        '${kind.substring(0, 1)}${DateTime.now().millisecondsSinceEpoch}',
+                    name: name.text.trim(),
+                    contact: contact.text.trim(),
+                    phone: phone.text.trim(),
+                    kind: kind,
+                    rating: item?.rating ?? 0,
+                    completedTrips: item?.completedTrips ?? 0,
+                    usualRoutes:
+                        route.text
+                            .split(',')
+                            .map((value) => value.trim())
+                            .where((value) => value.isNotEmpty)
+                            .toList(),
+                    tags:
+                        tags.text
+                            .split(',')
+                            .map((value) => value.trim())
+                            .where((value) => value.isNotEmpty)
+                            .toList(),
                   );
+                  if (item == null) {
+                    widget.store.addCounterparty(value);
+                  } else {
+                    widget.store.updateCounterparty(value);
+                  }
+                  Navigator.pop(context);
+                  setState(() {});
                 },
                 child: const Text('Сохранить'),
               ),
             ],
           ),
     );
+    name.dispose();
+    contact.dispose();
+    phone.dispose();
+    route.dispose();
+    tags.dispose();
   }
 
   void _showContact(BuildContext context, Counterparty item) {
@@ -350,10 +442,63 @@ class _ContactsScreenState extends State<ContactsScreen> {
                     label: const Text('Позвонить'),
                   ),
                 ),
+                const SizedBox(height: 9),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _editContact(this.context, item: item);
+                        },
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Изменить'),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _confirmDelete(item);
+                        },
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        label: const Text('Удалить'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
     );
+  }
+
+  Future<void> _confirmDelete(Counterparty item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Удалить контакт?'),
+            content: Text(
+              '${item.name} исчезнет из базы. Существующие рейсы не изменятся.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Удалить'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed == true) {
+      widget.store.removeCounterparty(item);
+      if (mounted) setState(() {});
+    }
   }
 }
 
@@ -589,7 +734,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                           ),
                           child: const Icon(
                             Icons.graphic_eq_rounded,
-                            color: AppColors.ink,
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -733,7 +878,8 @@ class _ToolsScreenState extends State<ToolsScreen> {
                   spacing: 7,
                   runSpacing: 7,
                   children: [
-                    TinyTag(label: 'Контур.Логистика'),
+                    TinyTag(label: 'Госключ'),
+                    TinyTag(label: 'Оператор ИС ЭПД'),
                     TinyTag(label: 'Saby'),
                     TinyTag(label: '1С'),
                     TinyTag(label: 'ATI.SU'),

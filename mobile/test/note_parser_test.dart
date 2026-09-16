@@ -44,4 +44,25 @@ void main() {
     expect(draft.clientRate, 150000);
     expect(draft.carrierRate, 118000);
   });
+
+  test('разбирает новый маршрут и произвольные стороны рейса', () {
+    final draft = NoteParser().parse(
+      'Рейс Москва-Махачкала, груз микросхемы 10 тонн, нужен тент. '
+      'Клиент ООО Ромашка платит 210 тысяч, перевозчик ИП Алиев '
+      'просит 165 тысяч. Водитель Рашид Алиев, номер А123ВС05.',
+      now: DateTime(2026, 9, 17),
+    );
+
+    expect(draft.from, 'Москва');
+    expect(draft.to, 'Махачкала');
+    expect(draft.cargo, 'Микросхемы');
+    expect(draft.weight, 10);
+    expect(draft.vehicle, 'Тент');
+    expect(draft.client, 'ООО Ромашка');
+    expect(draft.clientRate, 210000);
+    expect(draft.carrier, 'ИП Алиев');
+    expect(draft.carrierRate, 165000);
+    expect(draft.driver, 'Рашид Алиев');
+    expect(draft.truckPlate, 'А123ВС05');
+  });
 }

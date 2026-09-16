@@ -8,11 +8,11 @@ void main() {
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(const TransKonturApp());
+    await tester.pumpWidget(const ReysApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('ТрансКонтур'), findsOneWidget);
-    expect(find.text('Доброе утро, Виталий'), findsOneWidget);
+    expect(find.text('РЕЙС'), findsOneWidget);
+    expect(find.textContaining('Виталий'), findsOneWidget);
     expect(find.text('Новый рейс'), findsOneWidget);
     expect(find.text('Сейчас важно'), findsOneWidget);
   });
@@ -24,7 +24,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(const TransKonturApp());
+    await tester.pumpWidget(const ReysApp());
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 

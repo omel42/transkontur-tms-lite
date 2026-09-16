@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const ink = Color(0xFF071521);
-  static const inkSoft = Color(0xFF152633);
-  static const acid = Color(0xFFC8FF3D);
-  static const cyan = Color(0xFF70E7EC);
-  static const paper = Color(0xFFF4F6F2);
-  static const line = Color(0xFFDCE3DE);
-  static const muted = Color(0xFF77838B);
-  static const green = Color(0xFF197B54);
-  static const orange = Color(0xFFF29A45);
-  static const blue = Color(0xFF566BD7);
+  static const ink = Color(0xFF0B1720);
+  static const inkSoft = Color(0xFF21323D);
+  // Kept as an alias to avoid visual regressions in older widgets. It is now a
+  // calm blue primary rather than the former neon green.
+  static const acid = Color(0xFF4777E8);
+  static const cyan = Color(0xFF78C7C1);
+  static const paper = Color(0xFFF3F6F8);
+  static const line = Color(0xFFDCE3E8);
+  static const muted = Color(0xFF6E7C86);
+  static const green = Color(0xFF247A70);
+  static const orange = Color(0xFFE58A45);
+  static const blue = Color(0xFF4777E8);
 }
 
 ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.acid,
-    primary: AppColors.ink,
-    secondary: AppColors.acid,
+    primary: AppColors.blue,
+    secondary: AppColors.cyan,
     surface: Colors.white,
   );
   return ThemeData(

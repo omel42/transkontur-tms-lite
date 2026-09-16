@@ -35,7 +35,7 @@ class Trip {
     this.lastEvent = '',
     this.progress = 0,
     this.documentsReady = 0,
-    this.documentsTotal = 6,
+    this.documentsTotal = 7,
   });
 
   final String id;
@@ -87,6 +87,62 @@ class Counterparty {
   final List<String> usualRoutes;
   final List<String> tags;
   final int debt;
+
+  Counterparty copyWith({
+    String? id,
+    String? name,
+    String? contact,
+    String? phone,
+    String? kind,
+    double? rating,
+    int? completedTrips,
+    List<String>? usualRoutes,
+    List<String>? tags,
+    int? debt,
+  }) => Counterparty(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    contact: contact ?? this.contact,
+    phone: phone ?? this.phone,
+    kind: kind ?? this.kind,
+    rating: rating ?? this.rating,
+    completedTrips: completedTrips ?? this.completedTrips,
+    usualRoutes: usualRoutes ?? this.usualRoutes,
+    tags: tags ?? this.tags,
+    debt: debt ?? this.debt,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'contact': contact,
+    'phone': phone,
+    'kind': kind,
+    'rating': rating,
+    'completedTrips': completedTrips,
+    'usualRoutes': usualRoutes,
+    'tags': tags,
+    'debt': debt,
+  };
+
+  factory Counterparty.fromJson(Map<String, dynamic> json) => Counterparty(
+    id: json['id'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    contact: json['contact'] as String? ?? '',
+    phone: json['phone'] as String? ?? '',
+    kind: json['kind'] as String? ?? 'carrier',
+    rating: (json['rating'] as num?)?.toDouble() ?? 0,
+    completedTrips: json['completedTrips'] as int? ?? 0,
+    usualRoutes:
+        (json['usualRoutes'] as List<dynamic>? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+    tags:
+        (json['tags'] as List<dynamic>? ?? const [])
+            .map((item) => item.toString())
+            .toList(),
+    debt: json['debt'] as int? ?? 0,
+  );
 }
 
 class TripDraft {
