@@ -12,7 +12,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ТрансКонтур'), findsOneWidget);
-    expect(find.text('Доброе утро, Алексей'), findsOneWidget);
+    expect(find.text('Доброе утро, Виталий'), findsOneWidget);
     expect(find.text('Новый рейс'), findsOneWidget);
     expect(find.text('Сейчас важно'), findsOneWidget);
   });

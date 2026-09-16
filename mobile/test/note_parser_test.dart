@@ -28,4 +28,20 @@ void main() {
     expect(draft.missingFields, contains('Груз'));
     expect(draft.missingFields, contains('Ставка клиента'));
   });
+
+  test('понимает падежи городов и числа словами', () {
+    final draft = NoteParser().parse(
+      'Из Москвы в Казань завтра в девять. Оборудование двадцать тонн, '
+      'нужен тент. Клиент НордПром даёт сто пятьдесят тысяч, '
+      'перевозчику сто восемнадцать тысяч.',
+      now: DateTime(2026, 9, 17),
+    );
+
+    expect(draft.from, 'Москва');
+    expect(draft.to, 'Казань');
+    expect(draft.weight, 20);
+    expect(draft.pickupTime, '09:00');
+    expect(draft.clientRate, 150000);
+    expect(draft.carrierRate, 118000);
+  });
 }

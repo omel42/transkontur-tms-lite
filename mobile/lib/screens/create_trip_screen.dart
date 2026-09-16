@@ -5,12 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:speech_to_text/speech_recognition_error.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../data/app_store.dart';
 import '../domain/models.dart';
 import '../services/local_asr.dart';
 import '../services/note_parser.dart';
 import '../theme.dart';
+import 'documents_screen.dart';
 
 class CreateTripScreen extends StatefulWidget {
   const CreateTripScreen({super.key, required this.store});
@@ -27,6 +31,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   final parser = NoteParser();
   final asr = createLocalAsrEngine();
   final recorder = AudioRecorder();
+  final speech = SpeechToText();
   final note = TextEditingController();
   final fields = <String, TextEditingController>{};
   Timer? timer;
@@ -35,6 +40,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   int seconds = 0;
   bool recording = false;
   bool processing = false;
+  bool usingSystemSpeech = false;
+  bool finishQueued = false;
   Trip? created;
 
   @override
@@ -47,6 +54,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   @override
   void dispose() {
     timer?.cancel();
+    speech.cancel();
     recorder.dispose();
     note.dispose();
     for (final item in fields.values) {
@@ -111,7 +119,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   void _analyze() {
     final text = note.text.trim().isEmpty ? demoNote : note.text.trim();
     note.text = text;
-    final draft = parser.parse(text, now: DateTime(2026, 9, 16));
+    final draft = parser.parse(text, now: DateTime.now());
     widget.store.updateDraft(draft);
     _fill(draft);
     setState(() => stage = 1);
@@ -124,6 +132,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   Future<void> _toggleRecording() async {
     if (recording) {
+      if (usingSystemSpeech) {
+        await speech.stop();
+        await _finishSystemSpeech();
+        return;
+      }
       timer?.cancel();
       final path = await recorder.stop();
       if (!mounted) return;
@@ -139,21 +152,26 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         }
       } catch (_) {}
       if (transcript.isEmpty) {
-        transcript = demoNote;
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'В веб-демо подставлена тестовая расшифровка. На телефоне Qwen3-ASR работает локально.',
-              ),
+        if (!mounted) return;
+        setState(() => processing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Речь не распознана. Попробуйте ещё раз или вставьте текст.',
             ),
-          );
-        }
+          ),
+        );
+        return;
       }
       if (!mounted) return;
       note.text = transcript;
       setState(() => processing = false);
       _analyze();
+      return;
+    }
+    final localState = await asr.readiness();
+    if (!localState.ready) {
+      await _startSystemSpeech();
       return;
     }
     if (!await recorder.hasPermission()) {
@@ -184,6 +202,116 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => seconds++);
     });
+  }
+
+  Future<void> _startSystemSpeech() async {
+    finishQueued = false;
+    final available = await speech.initialize(
+      onStatus: (status) {
+        if ((status == SpeechToText.doneStatus ||
+                status == SpeechToText.notListeningStatus) &&
+            recording &&
+            usingSystemSpeech) {
+          Future<void>.delayed(
+            const Duration(milliseconds: 350),
+            _finishSystemSpeech,
+          );
+        }
+      },
+      onError: _onSpeechError,
+    );
+    if (!available) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'На телефоне недоступна служба распознавания речи. Проверьте разрешение микрофона.',
+          ),
+        ),
+      );
+      return;
+    }
+    final locales = await speech.locales();
+    final russian = locales.where(
+      (locale) => locale.localeId.toLowerCase().startsWith('ru'),
+    );
+    final localeId = russian.isEmpty ? null : russian.first.localeId;
+    note.clear();
+    if (!mounted) return;
+    setState(() {
+      usingSystemSpeech = true;
+      recording = true;
+      processing = false;
+      seconds = 0;
+    });
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && recording) setState(() => seconds++);
+    });
+    await speech.listen(
+      onResult: _onSpeechResult,
+      listenOptions: SpeechListenOptions(
+        localeId: localeId,
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: ListenMode.dictation,
+        listenFor: const Duration(minutes: 2),
+        pauseFor: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!mounted) return;
+    setState(() => note.text = result.recognizedWords.trim());
+    if (result.finalResult) {
+      Future<void>.delayed(
+        const Duration(milliseconds: 250),
+        _finishSystemSpeech,
+      );
+    }
+  }
+
+  void _onSpeechError(SpeechRecognitionError error) {
+    timer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      recording = false;
+      processing = false;
+      usingSystemSpeech = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          error.errorMsg == 'error_no_match'
+              ? 'Не расслышал речь. Нажмите микрофон и попробуйте ещё раз.'
+              : 'Ошибка распознавания: ${error.errorMsg}',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _finishSystemSpeech() async {
+    if (finishQueued || !usingSystemSpeech) return;
+    finishQueued = true;
+    timer?.cancel();
+    if (speech.isListening) await speech.stop();
+    if (!mounted) return;
+    setState(() {
+      recording = false;
+      processing = note.text.trim().isNotEmpty;
+      usingSystemSpeech = false;
+    });
+    if (note.text.trim().isEmpty) {
+      setState(() => processing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не расслышал речь. Попробуйте ещё раз.')),
+      );
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    if (!mounted) return;
+    setState(() => processing = false);
+    _analyze();
   }
 
   void _save() {
@@ -384,7 +512,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         recording
             ? 'Слушаю · 00:${seconds.toString().padLeft(2, '0')}'
             : processing
-            ? 'Распознаю на устройстве…'
+            ? 'Разбираю речь и заполняю…'
             : 'Нажмите и расскажите',
         style: const TextStyle(
           color: Colors.white,
@@ -400,6 +528,26 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         textAlign: TextAlign.center,
         style: const TextStyle(color: Color(0xFF8F9EA7), fontSize: 12),
       ),
+      if (recording && note.text.trim().isNotEmpty) ...[
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Text(
+            note.text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
       const SizedBox(height: 22),
       TextButton.icon(
         onPressed:
@@ -896,6 +1044,23 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         ),
       ),
       const SizedBox(height: 20),
+      OutlinedButton.icon(
+        onPressed:
+            created == null
+                ? null
+                : () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder:
+                        (_) => DocumentsScreen(
+                          store: widget.store,
+                          initialTrip: created,
+                        ),
+                  ),
+                ),
+        icon: const Icon(Icons.description_outlined),
+        label: const Text('Открыть подготовленные документы'),
+      ),
+      const SizedBox(height: 9),
       ElevatedButton(
         onPressed: () => Navigator.pop(context),
         child: const Text('На главную'),

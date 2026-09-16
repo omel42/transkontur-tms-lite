@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data/app_store.dart';
+import 'domain/models.dart';
 import 'screens/create_trip_screen.dart';
+import 'screens/documents_screen.dart';
+import 'screens/feature_screens.dart';
 import 'screens/home_screen.dart';
 import 'screens/other_screens.dart';
 import 'theme.dart';
@@ -50,6 +53,10 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int index = 0;
 
+  void _open(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
   void openCreate() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -58,6 +65,12 @@ class _ShellState extends State<Shell> {
       ),
     );
   }
+
+  void openDocuments([Trip? trip]) =>
+      _open(DocumentsScreen(store: widget.store, initialTrip: trip));
+
+  void openDriver([Trip? trip]) =>
+      _open(DriverLinksScreen(store: widget.store, initialTrip: trip));
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -68,10 +81,32 @@ class _ShellState extends State<Shell> {
           store: widget.store,
           onCreate: openCreate,
           onTrips: () => setState(() => index = 1),
+          onNotifications:
+              () => _open(
+                NotificationsScreen(
+                  store: widget.store,
+                  onOpenDocuments: openDocuments,
+                ),
+              ),
+          onDocuments: openDocuments,
+          onDriver: openDriver,
         ),
-        TripsScreen(store: widget.store, onCreate: openCreate),
+        TripsScreen(
+          store: widget.store,
+          onCreate: openCreate,
+          onDocuments: openDocuments,
+          onDriver: openDriver,
+        ),
         ContactsScreen(store: widget.store),
-        ToolsScreen(store: widget.store),
+        ToolsScreen(
+          store: widget.store,
+          onDocuments: openDocuments,
+          onMoney: () => _open(MoneyScreen(store: widget.store)),
+          onCalendar: () => _open(CalendarScreen(store: widget.store)),
+          onDriverLinks: openDriver,
+          onVoice: () => _open(const VoiceSettingsScreen()),
+          onIntegrations: () => _open(const IntegrationsScreen()),
+        ),
       ];
       return Scaffold(
         body: Center(

@@ -35,7 +35,7 @@ class Trip {
     this.lastEvent = '',
     this.progress = 0,
     this.documentsReady = 0,
-    this.documentsTotal = 5,
+    this.documentsTotal = 6,
   });
 
   final String id;

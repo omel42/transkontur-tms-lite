@@ -45,10 +45,12 @@ class PageHeader extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.icon,
+    this.onIconTap,
   });
   final String eyebrow;
   final String title;
   final IconData icon;
+  final VoidCallback? onIconTap;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -71,15 +73,19 @@ class PageHeader extends StatelessWidget {
           ],
         ),
       ),
-      Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.line),
+      InkWell(
+        onTap: onIconTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.line),
+          ),
+          child: Icon(icon, color: AppColors.ink, size: 21),
         ),
-        child: Icon(icon, color: AppColors.ink, size: 21),
       ),
     ],
   );
@@ -311,7 +317,12 @@ class TinyTag extends StatelessWidget {
   );
 }
 
-void showTripDetails(BuildContext context, Trip trip) {
+void showTripDetails(
+  BuildContext context,
+  Trip trip, {
+  VoidCallback? onDocuments,
+  VoidCallback? onDriver,
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -456,7 +467,12 @@ void showTripDetails(BuildContext context, Trip trip) {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pop(context);
+                            if (onDocuments != null) {
+                              onDocuments();
+                            }
+                          },
                           icon: const Icon(Icons.print_outlined),
                           label: const Text('Документы'),
                         ),
@@ -464,7 +480,12 @@ void showTripDetails(BuildContext context, Trip trip) {
                       const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pop(context);
+                            if (onDriver != null) {
+                              onDriver();
+                            }
+                          },
                           icon: const Icon(Icons.link_rounded),
                           label: const Text('Водителю'),
                         ),

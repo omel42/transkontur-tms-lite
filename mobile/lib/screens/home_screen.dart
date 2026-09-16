@@ -11,15 +11,23 @@ class HomeScreen extends StatelessWidget {
     required this.store,
     required this.onCreate,
     required this.onTrips,
+    required this.onNotifications,
+    required this.onDocuments,
+    required this.onDriver,
   });
   final AppStore store;
   final VoidCallback onCreate;
   final VoidCallback onTrips;
+  final VoidCallback onNotifications;
+  final ValueChanged<Trip?> onDocuments;
+  final ValueChanged<Trip?> onDriver;
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
     slivers: [
-      SliverToBoxAdapter(child: _Header(store: store)),
+      SliverToBoxAdapter(
+        child: _Header(store: store, onNotifications: onNotifications),
+      ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 118),
         sliver: SliverList.list(
@@ -34,7 +42,15 @@ class HomeScreen extends StatelessWidget {
             ...store.attention.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 9),
-                child: _AttentionCard(item: item),
+                child: _AttentionCard(
+                  item: item,
+                  onTap:
+                      item.kind == 'document'
+                          ? () => onDocuments(
+                            _tripByNumber(store.trips, item.tripNumber),
+                          )
+                          : onTrips,
+                ),
               ),
             ),
             const SizedBox(height: 18),
@@ -50,11 +66,20 @@ class HomeScreen extends StatelessWidget {
                 .map(
                   (trip) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: TripCard(trip: trip),
+                    child: TripCard(
+                      trip: trip,
+                      onTap:
+                          () => showTripDetails(
+                            context,
+                            trip,
+                            onDocuments: () => onDocuments(trip),
+                            onDriver: () => onDriver(trip),
+                          ),
+                    ),
                   ),
                 ),
             const SizedBox(height: 12),
-            const _AutomationCard(),
+            _AutomationCard(onTap: () => onDocuments(null)),
           ],
         ),
       ),
@@ -62,9 +87,17 @@ class HomeScreen extends StatelessWidget {
   );
 }
 
+Trip? _tripByNumber(List<Trip> trips, String number) {
+  for (final trip in trips) {
+    if (trip.number == number) return trip;
+  }
+  return null;
+}
+
 class _Header extends StatelessWidget {
-  const _Header({required this.store});
+  const _Header({required this.store, required this.onNotifications});
   final AppStore store;
+  final VoidCallback onNotifications;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -112,41 +145,45 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(
-                      Icons.notifications_none_rounded,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Positioned(
-                    top: 9,
-                    right: 10,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: AppColors.acid,
-                        shape: BoxShape.circle,
+            InkWell(
+              onTap: onNotifications,
+              borderRadius: BorderRadius.circular(14),
+              child: Ink(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Stack(
+                  children: [
+                    const Center(
+                      child: Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                ],
+                    Positioned(
+                      top: 9,
+                      right: 10,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: AppColors.acid,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 25),
         const Text(
-          'Доброе утро, Алексей',
+          'Доброе утро, Виталий',
           style: TextStyle(
             color: Colors.white,
             fontSize: 26,
@@ -317,8 +354,9 @@ class _VoiceHero extends StatelessWidget {
 }
 
 class _AttentionCard extends StatelessWidget {
-  const _AttentionCard({required this.item});
+  const _AttentionCard({required this.item, required this.onTap});
   final AttentionItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -327,94 +365,103 @@ class _AttentionCard extends StatelessWidget {
       'warning' => (Icons.schedule_rounded, AppColors.orange),
       _ => (Icons.description_outlined, AppColors.blue),
     };
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(19),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 43,
-            height: 43,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: .11),
-              borderRadius: BorderRadius.circular(14),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(19),
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(19),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 43,
+              height: 43,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .11),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 21),
             ),
-            child: Icon(icon, color: color, size: 21),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${item.tripNumber} · ${item.subtitle}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 11.5,
+                  const SizedBox(height: 3),
+                  Text(
+                    '${item.tripNumber} · ${item.subtitle}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 11.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFFABB4B2)),
-        ],
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFFABB4B2)),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _AutomationCard extends StatelessWidget {
-  const _AutomationCard();
+  const _AutomationCard({required this.onTap});
+  final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: AppColors.ink,
-      borderRadius: BorderRadius.circular(23),
-    ),
-    child: const Row(
-      children: [
-        Icon(Icons.auto_awesome_rounded, color: AppColors.acid, size: 28),
-        SizedBox(width: 13),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Рутина под контролем',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(23),
+    child: Ink(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(23),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.auto_awesome_rounded, color: AppColors.acid, size: 28),
+          SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Рутина под контролем',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Напоминания водителю, документы и оплаты проверяются автоматически.',
-                style: TextStyle(
-                  color: Color(0xFFAAB5BC),
-                  fontSize: 11.5,
-                  height: 1.35,
+                SizedBox(height: 4),
+                Text(
+                  'Напоминания водителю, документы и оплаты проверяются автоматически.',
+                  style: TextStyle(
+                    color: Color(0xFFAAB5BC),
+                    fontSize: 11.5,
+                    height: 1.35,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

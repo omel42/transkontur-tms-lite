@@ -89,7 +89,7 @@ class AppStore extends ChangeNotifier {
       truckPlate: 'А504ТМ 40',
       lastEvent: 'Закрывающие документы получены',
       progress: 1,
-      documentsReady: 5,
+      documentsReady: 6,
     ),
   ];
 
